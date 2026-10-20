@@ -9,6 +9,7 @@
 const fs = require('fs');
 const path = require('path');
 const readline = require('readline');
+const crypto = require('crypto');
 
 const envPath = path.join(__dirname, '.env');
 const envExamplePath = path.join(__dirname, '.env.example');
@@ -192,6 +193,13 @@ async function runSetupWizard() {
 
     rl.close();
 
+    // Generate unique random credentials to prevent any collisions between multiple users
+    const dndSecret = existing.DND_SECRET || crypto.randomBytes(6).toString('hex');
+    const randomSuffix = crypto.randomBytes(4).toString('hex');
+    const cleanOwner = ownerName.toLowerCase().replace(/[^a-z0-9]/g, '') || 'owner';
+    const cleanBot = botName.toLowerCase().replace(/[^a-z0-9]/g, '') || 'bot';
+    const ntfyDndTopic = existing.NTFY_DND_TOPIC || `${cleanBot}-dnd-${cleanOwner}-${randomSuffix}`;
+
     const envContent = `# ========================================================
 # WhatsApp AI Auto-Responder Configuration
 # ========================================================
@@ -212,6 +220,12 @@ ONLY_REPLY_IN_DND=${onlyReplyInDnd}
 
 # Port for local Apple Shortcuts DND webhook
 DND_PORT=${dndPort}
+
+# Secret authentication token for local webhook security (prevents local network collisions)
+DND_SECRET="${dndSecret}"
+
+# Unique Cloud ntfy.sh Topic (globally unique to prevent triggering other people's assistants)
+NTFY_DND_TOPIC="${ntfyDndTopic}"
 
 # Secret unban password for blacklisted users
 RESCUE_PASSWORD="${rescuePassword}"
@@ -246,6 +260,8 @@ GEMINI_API_KEY="your-gemini-api-key-here"
 GEMINI_MODEL="gemini-3.5-flash-lite"
 ONLY_REPLY_IN_DND=true
 DND_PORT=3000
+DND_SECRET="your-random-local-webhook-secret"
+NTFY_DND_TOPIC="your-unique-cloud-topic-uuid"
 RESCUE_PASSWORD="unbanme"
 USER_COOLDOWN_SECONDS=30
 REPLY_TO_GROUPS=false

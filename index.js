@@ -41,6 +41,7 @@ const replyToGroups = process.env.REPLY_TO_GROUPS === 'true';
 const onlyReplyInDnd = process.env.ONLY_REPLY_IN_DND !== 'false';
 const customChromePath = process.env.CHROME_PATH || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
 const DND_PORT = parseInt(process.env.DND_PORT || '3000', 10);
+const DND_SECRET = process.env.DND_SECRET || '';
 const TROLL_IMAGE_PATH = process.env.TROLL_IMAGE_PATH || path.join(__dirname, 'assets/troll_meme.png');
 
 // Timing constants
@@ -247,11 +248,12 @@ function startNtfyDndListener() {
 client.once('ready', () => {
   const currentIp = getLocalIp();
   startNtfyDndListener();
+  const keyParam = DND_SECRET ? `?key=${DND_SECRET}` : '';
   console.log(`\n🎉 ${BOT_NAME} is ready and connected!`);
   console.log(`🔕 Operating Mode: ONLY reply during iPhone Do Not Disturb (DND) (${onlyReplyInDnd ? 'ENABLED' : 'ALWAYS REPLY'})`);
   console.log(`📊 Current Status: ${isDndActive ? '🟢 ACTIVE (Auto-replying to messages)' : '⏸️ STANDBY (Phone is active, assistant silent)'}`);
   console.log(`☁️ iPhone Shortcut (Cloud / Anywhere): https://ntfy.sh/${ntfyDndTopic} (POST 'on' or 'off')`);
-  console.log(`📡 iPhone Shortcut (Local Wi-Fi): http://${currentIp}:${DND_PORT}/dnd/on`);
+  console.log(`📡 iPhone Shortcut (Local Wi-Fi): http://${currentIp}:${DND_PORT}/dnd/on${keyParam}`);
   console.log(`💬 WhatsApp Manual Commands: Send yourself ".dnd on" or ".dnd off" to toggle.`);
   console.log('==============================================\n');
 });
@@ -284,6 +286,14 @@ const dndServer = http.createServer(async (req, res) => {
   }
 
   const url = new URL(req.url, `http://localhost:${DND_PORT}`);
+  const providedKey = url.searchParams.get('key') || req.headers['x-dnd-secret'];
+
+  // Security check: if DND_SECRET is configured, reject requests without valid key
+  if (DND_SECRET && providedKey !== DND_SECRET) {
+    res.writeHead(401, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ error: 'Unauthorized: Invalid or missing DND secret key' }));
+    return;
+  }
   
   if (url.pathname === '/dnd/on') {
     await setDndState(true, 'Apple Shortcuts / Local HTTP');
