@@ -111,6 +111,33 @@ function isEmergency(text) {
   });
 }
 
+// Cross-platform Chrome / Chromium binary detector (macOS, Windows, Linux)
+function detectSystemChrome() {
+  if (process.env.CHROME_PATH && fs.existsSync(process.env.CHROME_PATH)) {
+    return process.env.CHROME_PATH;
+  }
+  const candidates = [
+    // macOS
+    '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+    '/Applications/Brave Browser.app/Contents/MacOS/Brave Browser',
+    '/Applications/Chromium.app/Contents/MacOS/Chromium',
+    // Windows
+    'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
+    'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe',
+    path.join(process.env.LOCALAPPDATA || '', 'Google\\Chrome\\Application\\chrome.exe'),
+    path.join(process.env.PROGRAMFILES || '', 'Google\\Chrome\\Application\\chrome.exe'),
+    // Linux
+    '/usr/bin/google-chrome',
+    '/usr/bin/google-chrome-stable',
+    '/usr/bin/chromium',
+    '/usr/bin/chromium-browser'
+  ];
+  for (const c of candidates) {
+    if (c && fs.existsSync(c)) return c;
+  }
+  return null;
+}
+
 // Puppeteer launch configuration
 const puppeteerOptions = {
   headless: true,
@@ -128,11 +155,12 @@ const puppeteerOptions = {
   ]
 };
 
-if (fs.existsSync(customChromePath)) {
-  puppeteerOptions.executablePath = customChromePath;
-  console.log(`🔍 Using system Google Chrome: ${customChromePath}`);
+const detectedChrome = detectSystemChrome();
+if (detectedChrome) {
+  puppeteerOptions.executablePath = detectedChrome;
+  console.log(`🔍 Browser engine detected: ${detectedChrome}`);
 } else {
-  console.log('ℹ️ Using default bundled browser engine.');
+  console.log('ℹ️ No system Chrome detected, attempting default bundled browser engine.');
 }
 
 // Initialize WhatsApp Client
@@ -147,14 +175,22 @@ console.log('==============================================');
 console.log(`🤖 ${BOT_NAME} (Personal AI Assistant to ${OWNER_NAME})`);
 console.log('==============================================');
 
+client.on('loading_screen', (percent, message) => {
+  console.log(`⏳ Loading WhatsApp Web: ${percent}% - ${message || 'Connecting...'}`);
+});
+
 client.on('qr', (qr) => {
-  console.log('\n📲 Please scan the QR code below in WhatsApp:');
-  console.log('   (WhatsApp > Settings > Linked Devices > Link a Device)\n');
+  console.log('\n==============================================');
+  console.log('📲 QR CODE GENERATED! SCAN WITH WHATSAPP:');
+  console.log('   (WhatsApp > Settings > Linked Devices > Link a Device)');
+  console.log('   * Tip: Make sure your terminal window is wide enough.');
+  console.log('==============================================\n');
   qrcode.generate(qr, { small: true });
+  console.log('\n⏳ Waiting for phone to scan the QR code...\n');
 });
 
 client.once('authenticated', () => {
-  console.log('✅ WhatsApp authentication successful!');
+  console.log('✅ WhatsApp authenticated successfully! (Session active)');
 });
 
 client.on('auth_failure', (msg) => {
@@ -691,7 +727,17 @@ process.on('SIGINT', async () => {
 // Main startup function: checks configuration wizard then initializes WhatsApp client
 async function main() {
   await checkOrRunSetup();
-  client.initialize();
+  require('dotenv').config({ override: true });
+
+  console.log('⏳ Starting WhatsApp client and launching browser...');
+  console.log('   (Waiting for WhatsApp Web to load, QR code will appear in ~10-25 seconds)...\n');
+
+  try {
+    await client.initialize();
+  } catch (err) {
+    console.error('❌ Failed to launch WhatsApp client:', err.message || err);
+    console.error('💡 Troubleshooting: Make sure Google Chrome or Chromium is installed on your computer.');
+  }
 }
 
 main();
