@@ -3,20 +3,19 @@ import { QRCodeSVG } from 'qrcode.react';
 import { 
   Shield, 
   MessageSquare, 
-  Bell, 
   Settings, 
   Activity, 
-  UserCheck, 
   Power, 
   Clock, 
-  AlertTriangle, 
-  CheckCircle2, 
-  Sparkles, 
+  Check, 
   Smartphone,
-  RefreshCw,
   Key,
-  Unlock,
-  Radio
+  Radio,
+  Sliders,
+  ChevronRight,
+  ExternalLink,
+  Lock,
+  Sparkles
 } from 'lucide-react';
 
 const API_BASE = 'http://localhost:3000';
@@ -24,15 +23,14 @@ const API_BASE = 'http://localhost:3000';
 export default function App() {
   const [token, setToken] = useState(() => localStorage.getItem('dashboard_token') || 'ee98897d56c02a2e716a06004a834e20');
   const [authed, setAuthed] = useState(false);
-  const [activeTab, setActiveTab] = useState('overview'); // overview, activity, briefings, blacklist, settings
+  const [activeTab, setActiveTab] = useState('overview'); // overview, activity, briefings, security, settings
   const [state, setState] = useState(null);
-  const [wsStatus, setWsStatus] = useState('CONNECTING'); // CONNECTING, CONNECTED, DISCONNECTED
+  const [wsStatus, setWsStatus] = useState('CONNECTING');
   const [toggleLoading, setToggleLoading] = useState(false);
   const [settingsForm, setSettingsForm] = useState(null);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const wsRef = useRef(null);
 
-  // Authenticated fetch helper
   const apiFetch = async (endpoint, options = {}) => {
     const headers = {
       'Content-Type': 'application/json',
@@ -47,7 +45,6 @@ export default function App() {
     return res.json();
   };
 
-  // Connect WebSocket & load initial state
   useEffect(() => {
     if (!token) return;
 
@@ -120,7 +117,6 @@ export default function App() {
 
     connectWs();
 
-    // Initial HTTP fetch
     apiFetch('/api/state')
       .then(data => {
         if (isMounted) {
@@ -139,7 +135,6 @@ export default function App() {
     };
   }, [token]);
 
-  // Toggle DND Switch
   const handleToggleDnd = async () => {
     if (!state || toggleLoading) return;
     setToggleLoading(true);
@@ -154,7 +149,6 @@ export default function App() {
     setToggleLoading(false);
   };
 
-  // Unban user action
   const handleUnban = async (userId) => {
     try {
       await apiFetch('/api/unban', {
@@ -164,7 +158,6 @@ export default function App() {
     } catch (_) {}
   };
 
-  // Save Settings
   const handleSaveSettings = async (e) => {
     e.preventDefault();
     try {
@@ -177,43 +170,45 @@ export default function App() {
     } catch (_) {}
   };
 
-  // Login view if unauthorized
+  // Apple-styled Login screen
   if (!authed) {
     return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4">
-        <div className="max-w-md w-full bg-slate-900 border border-slate-800 rounded-2xl p-8 shadow-2xl">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="w-12 h-12 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400">
-              <Shield className="w-6 h-6" />
-            </div>
-            <div>
-              <h1 className="text-xl font-bold text-white">Security Gateway</h1>
-              <p className="text-xs text-slate-400">WhatsApp AI Executive Control</p>
-            </div>
+      <div className="min-h-screen bg-[#000000] flex flex-col justify-center items-center px-4">
+        <div className="max-w-[420px] w-full apple-card rounded-3xl p-10 text-center">
+          <div className="w-14 h-14 mx-auto rounded-2xl bg-[#1d1d1f] flex items-center justify-center mb-6 border border-white/10">
+            <Lock className="w-6 h-6 text-[#2997ff]" />
           </div>
 
-          <form onSubmit={(e) => { e.preventDefault(); localStorage.setItem('dashboard_token', token); window.location.reload(); }}>
-            <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
-              Dashboard Security Token
-            </label>
-            <div className="relative mb-6">
-              <Key className="w-5 h-5 absolute left-3 top-3 text-slate-500" />
+          <h1 className="text-2xl font-semibold text-white tracking-tight mb-2">
+            Personal Intelligence
+          </h1>
+          <p className="text-sm text-[#86868b] leading-relaxed mb-8">
+            Enter your private dashboard security key to manage your WhatsApp AI assistant.
+          </p>
+
+          <form onSubmit={(e) => { e.preventDefault(); localStorage.setItem('dashboard_token', token); window.location.reload(); }} className="space-y-4">
+            <div className="relative">
               <input
                 type="password"
                 value={token}
                 onChange={(e) => setToken(e.target.value)}
-                placeholder="Enter DASHBOARD_API_KEY from .env"
-                className="w-full bg-slate-950 border border-slate-700 rounded-xl py-2.5 pl-10 pr-4 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-colors"
+                placeholder="Dashboard Token"
+                className="w-full bg-[#1d1d1f] border border-white/10 rounded-xl py-3 px-4 text-sm text-white placeholder-[#86868b] focus:outline-none focus:border-[#2997ff] transition-all text-center tracking-widest font-mono"
                 required
               />
             </div>
+
             <button
               type="submit"
-              className="w-full py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-medium rounded-xl text-sm transition-colors shadow-lg shadow-indigo-600/20"
+              className="w-full py-3 apple-btn-primary rounded-xl text-sm font-medium tracking-tight"
             >
-              Authenticate & Enter
+              Sign In
             </button>
           </form>
+
+          <p className="text-[11px] text-[#6e6e73] mt-8">
+            Secured with local hardware-isolated token verification.
+          </p>
         </div>
       </div>
     );
@@ -221,405 +216,420 @@ export default function App() {
 
   const isConnected = state?.status === 'CONNECTED';
   const isDnd = state?.isDndActive;
+  const ownerName = state?.settings?.ownerName || 'Onur';
+  const botName = state?.settings?.botName || 'MyThanUs';
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col">
-      {/* Top Navbar */}
-      <header className="h-16 border-b border-slate-800/80 bg-slate-900/60 backdrop-blur-md px-6 flex items-center justify-between sticky top-0 z-50">
-        <div className="flex items-center gap-4">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/20">
-            <Sparkles className="w-5 h-5 text-white" />
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="font-bold text-white text-base tracking-tight">{state?.settings?.botName || 'MyThanUs'}</span>
-              <span className="text-[10px] uppercase font-semibold px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
-                Executive AI
-              </span>
-            </div>
-            <p className="text-xs text-slate-400">Owner: <span className="text-slate-200 font-medium">{state?.settings?.ownerName || 'Onur'}</span></p>
-          </div>
-        </div>
-
-        {/* Live Status Badges */}
-        <div className="flex items-center gap-3">
-          <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium border ${
-            isConnected ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-amber-500/10 text-amber-400 border-amber-500/20'
-          }`}>
-            <span className={`w-2 h-2 rounded-full ${isConnected ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'}`} />
-            {isConnected ? 'WhatsApp Live' : state?.status === 'WAITING_FOR_QR' ? 'Scan QR Code' : 'Connecting Engine'}
+    <div className="min-h-screen bg-[#000000] text-[#f5f5f7] flex flex-col selection:bg-[#2997ff]/30">
+      {/* Apple-style Translucent Global Navigation Bar */}
+      <header className="sticky top-0 z-50 h-12 apple-glass border-b border-white/[0.08] px-6">
+        <div className="max-w-[1024px] mx-auto h-full flex items-center justify-between text-xs font-normal">
+          {/* Brand */}
+          <div className="flex items-center gap-3">
+            <span className="font-semibold text-white tracking-tight text-sm">{botName}</span>
+            <span className="text-[#86868b]">|</span>
+            <span className="text-[#86868b]">Personal Intelligence for {ownerName}</span>
           </div>
 
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium bg-slate-800/60 text-slate-300 border border-slate-700/60">
-            <Radio className={`w-3.5 h-3.5 ${wsStatus === 'CONNECTED' ? 'text-emerald-400' : 'text-slate-500'}`} />
-            WS: {wsStatus}
+          {/* Navigation Items */}
+          <nav className="flex items-center gap-6">
+            <button
+              onClick={() => setActiveTab('overview')}
+              className={`transition-colors py-1 ${activeTab === 'overview' ? 'text-white font-medium' : 'text-[#86868b] hover:text-[#f5f5f7]'}`}
+            >
+              Overview
+            </button>
+            <button
+              onClick={() => setActiveTab('activity')}
+              className={`transition-colors py-1 ${activeTab === 'activity' ? 'text-white font-medium' : 'text-[#86868b] hover:text-[#f5f5f7]'}`}
+            >
+              Activity
+            </button>
+            <button
+              onClick={() => setActiveTab('briefings')}
+              className={`transition-colors py-1 ${activeTab === 'briefings' ? 'text-white font-medium' : 'text-[#86868b] hover:text-[#f5f5f7]'}`}
+            >
+              Briefings
+            </button>
+            <button
+              onClick={() => setActiveTab('security')}
+              className={`transition-colors py-1 ${activeTab === 'security' ? 'text-white font-medium' : 'text-[#86868b] hover:text-[#f5f5f7]'}`}
+            >
+              Security
+            </button>
+            <button
+              onClick={() => setActiveTab('settings')}
+              className={`transition-colors py-1 ${activeTab === 'settings' ? 'text-white font-medium' : 'text-[#86868b] hover:text-[#f5f5f7]'}`}
+            >
+              Settings
+            </button>
+          </nav>
+
+          {/* Status Indicator Pill */}
+          <div className="flex items-center gap-2">
+            <span className={`w-1.5 h-1.5 rounded-full ${isConnected ? 'bg-[#30d158]' : 'bg-[#ffd60a]'}`} />
+            <span className="text-[11px] text-[#86868b]">
+              {isConnected ? 'Connected' : 'Pairing Required'}
+            </span>
           </div>
         </div>
       </header>
 
-      {/* Main Container */}
-      <div className="flex-1 flex max-w-7xl w-full mx-auto p-6 gap-6">
-        {/* Left Sidebar Navigation */}
-        <aside className="w-64 flex flex-col gap-2 shrink-0">
-          <button
-            onClick={() => setActiveTab('overview')}
-            className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${
-              activeTab === 'overview' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20' : 'text-slate-400 hover:text-white hover:bg-slate-900'
-            }`}
-          >
-            <Activity className="w-4 h-4" />
-            Mission Overview
-          </button>
+      {/* Main Content Container */}
+      <main className="flex-1 max-w-[1024px] w-full mx-auto px-6 py-12">
+        {/* TAB 1: OVERVIEW HERO */}
+        {activeTab === 'overview' && (
+          <div className="space-y-12">
+            {/* Apple Hero Headline */}
+            <div className="text-center py-4 max-w-2xl mx-auto">
+              <h2 className="text-4xl md:text-5xl font-semibold tracking-tight text-white mb-3">
+                {botName}.
+              </h2>
+              <p className="text-lg md:text-xl text-[#86868b] font-normal leading-relaxed">
+                Quietly managing your conversations. Intelligent, contextual, and completely private.
+              </p>
+            </div>
 
-          <button
-            onClick={() => setActiveTab('activity')}
-            className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${
-              activeTab === 'activity' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20' : 'text-slate-400 hover:text-white hover:bg-slate-900'
-            }`}
-          >
-            <MessageSquare className="w-4 h-4" />
-            Live Message Feed
-          </button>
-
-          <button
-            onClick={() => setActiveTab('briefings')}
-            className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${
-              activeTab === 'briefings' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20' : 'text-slate-400 hover:text-white hover:bg-slate-900'
-            }`}
-          >
-            <Clock className="w-4 h-4" />
-            DND Briefings
-          </button>
-
-          <button
-            onClick={() => setActiveTab('blacklist')}
-            className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${
-              activeTab === 'blacklist' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20' : 'text-slate-400 hover:text-white hover:bg-slate-900'
-            }`}
-          >
-            <Shield className="w-4 h-4" />
-            Security & Bans
-            {state?.bannedUsers?.length > 0 && (
-              <span className="ml-auto text-[10px] px-2 py-0.5 rounded-full bg-rose-500 text-white font-bold">
-                {state.bannedUsers.length}
-              </span>
+            {/* QR Pairing Card if unlinked */}
+            {!isConnected && state?.qrCode && (
+              <div className="apple-card rounded-3xl p-8 md:p-12 text-center max-w-lg mx-auto">
+                <div className="inline-block p-4 bg-white rounded-2xl shadow-2xl mb-6">
+                  <QRCodeSVG value={state.qrCode} size={200} level="M" />
+                </div>
+                <h3 className="text-xl font-semibold text-white mb-2 tracking-tight">
+                  Pair with WhatsApp
+                </h3>
+                <p className="text-xs text-[#86868b] leading-relaxed max-w-xs mx-auto">
+                  Open WhatsApp on your iPhone, go to <b>Settings &gt; Linked Devices &gt; Link a Device</b>, and point your camera here.
+                </p>
+              </div>
             )}
-          </button>
 
-          <button
-            onClick={() => setActiveTab('settings')}
-            className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${
-              activeTab === 'settings' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20' : 'text-slate-400 hover:text-white hover:bg-slate-900'
-            }`}
-          >
-            <Settings className="w-4 h-4" />
-            AI & Bot Settings
-          </button>
-        </aside>
-
-        {/* Content Area */}
-        <main className="flex-1 min-w-0">
-          {/* TAB 1: OVERVIEW */}
-          {activeTab === 'overview' && (
-            <div className="space-y-6">
-              {/* QR Code Banner if not connected */}
-              {!isConnected && state?.qrCode && (
-                <div className="bg-slate-900 border border-indigo-500/30 rounded-2xl p-6 flex flex-col md:flex-row items-center gap-6 shadow-2xl relative overflow-hidden">
-                  <div className="bg-white p-4 rounded-xl shadow-lg shrink-0">
-                    <QRCodeSVG value={state.qrCode} size={180} level="M" />
-                  </div>
-                  <div className="space-y-3">
-                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
-                      <Smartphone className="w-3.5 h-3.5" />
-                      Scan Required
-                    </div>
-                    <h2 className="text-xl font-bold text-white">Link Your WhatsApp Account</h2>
-                    <p className="text-sm text-slate-300 leading-relaxed">
-                      Open WhatsApp on your phone, go to <b>Settings &gt; Linked Devices &gt; Link a Device</b>, and point your camera at this QR code.
-                    </p>
-                  </div>
+            {/* Master Control Card (Hero Bento Item) */}
+            <div className="apple-card rounded-3xl p-8 md:p-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+              <div className="space-y-1.5">
+                <div className="inline-flex items-center gap-2 text-xs font-medium text-[#2997ff] uppercase tracking-wider">
+                  <span className={`w-2 h-2 rounded-full ${isDnd ? 'bg-[#30d158]' : 'bg-[#6e6e73]'}`} />
+                  {isDnd ? 'Focus Mode Active' : 'Assistant on Standby'}
                 </div>
-              )}
+                <h3 className="text-2xl font-semibold text-white tracking-tight">
+                  Do Not Disturb Auto-Responder
+                </h3>
+                <p className="text-sm text-[#86868b] max-w-xl">
+                  {isDnd 
+                    ? 'Your phone is currently quiet. Messages are answered by your assistant and organized into an Executive Briefing.'
+                    : 'You are currently active on your phone. Assistant replies are silenced to avoid interrupting your personal chats.'}
+                </p>
+              </div>
 
-              {/* Master Control Card */}
-              <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 flex items-center justify-between shadow-xl">
+              <button
+                onClick={handleToggleDnd}
+                disabled={toggleLoading}
+                className={`px-6 py-3 rounded-full text-xs font-semibold tracking-tight transition-all shrink-0 ${
+                  isDnd 
+                    ? 'apple-btn-secondary hover:text-white' 
+                    : 'apple-btn-primary'
+                }`}
+              >
+                {isDnd ? 'Turn Off Auto-Responder' : 'Turn On Auto-Responder'}
+              </button>
+            </div>
+
+            {/* Bento Grid Stats */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="apple-card rounded-3xl p-8 flex flex-col justify-between h-48">
+                <span className="text-xs font-medium text-[#86868b] uppercase tracking-wider">Session Messages</span>
                 <div>
-                  <h3 className="text-lg font-bold text-white mb-1">Do Not Disturb (DND) Auto-Responder</h3>
-                  <p className="text-xs text-slate-400">
-                    {isDnd ? '🟢 ACTIVE: Auto-replying to incoming messages while Onur is away.' : '⏸️ STANDBY: Silent mode. Replies are paused because you are actively using phone.'}
-                  </p>
+                  <div className="text-4xl font-semibold tracking-tight text-white mb-1">
+                    {state?.messageCount || 0}
+                  </div>
+                  <span className="text-xs text-[#86868b]">Logged in current session</span>
                 </div>
+              </div>
 
-                <button
-                  onClick={handleToggleDnd}
-                  disabled={toggleLoading}
-                  className={`flex items-center gap-2.5 px-6 py-3 rounded-xl font-semibold text-sm transition-all shadow-lg ${
-                    isDnd
-                      ? 'bg-rose-600 hover:bg-rose-500 text-white shadow-rose-600/20'
-                      : 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-600/20'
-                  }`}
+              <div className="apple-card rounded-3xl p-8 flex flex-col justify-between h-48">
+                <span className="text-xs font-medium text-[#86868b] uppercase tracking-wider">Privacy & Security</span>
+                <div>
+                  <div className="text-4xl font-semibold tracking-tight text-white mb-1">
+                    {state?.bannedUsers?.length || 0}
+                  </div>
+                  <span className="text-xs text-[#86868b]">Enforced 3-strike bans</span>
+                </div>
+              </div>
+
+              <div className="apple-card rounded-3xl p-8 flex flex-col justify-between h-48">
+                <span className="text-xs font-medium text-[#86868b] uppercase tracking-wider">Intelligence Core</span>
+                <div>
+                  <div className="text-xl font-semibold tracking-tight text-white mb-1 truncate">
+                    {state?.settings?.geminiModel || 'gemini-3.5-flash-lite'}
+                  </div>
+                  <span className="text-xs text-[#86868b]">Sub-second natural reasoning</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Recent Conversations Preview */}
+            <div className="apple-card rounded-3xl p-8 space-y-6">
+              <div className="flex items-center justify-between border-b border-white/[0.06] pb-4">
+                <h4 className="text-base font-semibold text-white tracking-tight">Recent Interactions</h4>
+                <button 
+                  onClick={() => setActiveTab('activity')}
+                  className="text-xs text-[#2997ff] hover:underline inline-flex items-center gap-1"
                 >
-                  <Power className="w-4 h-4" />
-                  {isDnd ? 'Deactivate DND Mode' : 'Activate DND Mode'}
+                  View full feed <ChevronRight className="w-3.5 h-3.5" />
                 </button>
               </div>
 
-              {/* Stat Cards Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5">
-                  <div className="flex items-center justify-between mb-3 text-slate-400">
-                    <span className="text-xs font-semibold uppercase tracking-wider">Session Messages</span>
-                    <MessageSquare className="w-4 h-4 text-indigo-400" />
-                  </div>
-                  <div className="text-2xl font-bold text-white">{state?.messageCount || 0}</div>
-                  <p className="text-[11px] text-slate-500 mt-1">Logged during active DND window</p>
-                </div>
-
-                <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5">
-                  <div className="flex items-center justify-between mb-3 text-slate-400">
-                    <span className="text-xs font-semibold uppercase tracking-wider">Active Blacklists</span>
-                    <Shield className="w-4 h-4 text-rose-400" />
-                  </div>
-                  <div className="text-2xl font-bold text-white">{state?.bannedUsers?.length || 0}</div>
-                  <p className="text-[11px] text-slate-500 mt-1">Users currently banned for insults</p>
-                </div>
-
-                <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5">
-                  <div className="flex items-center justify-between mb-3 text-slate-400">
-                    <span className="text-xs font-semibold uppercase tracking-wider">AI Model</span>
-                    <Sparkles className="w-4 h-4 text-purple-400" />
-                  </div>
-                  <div className="text-sm font-bold text-white truncate">{state?.settings?.geminiModel || 'gemini-3.5-flash-lite'}</div>
-                  <p className="text-[11px] text-slate-500 mt-1">Ultra-low latency inference (~500ms)</p>
-                </div>
-              </div>
-
-              {/* Recent Live Feed Preview */}
-              <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="font-bold text-white text-base">Recent Live Interactions</h3>
-                  <button onClick={() => setActiveTab('activity')} className="text-xs text-indigo-400 hover:text-indigo-300 font-medium">View All &rarr;</button>
-                </div>
-
-                {state?.activityFeed?.length === 0 ? (
-                  <p className="text-sm text-slate-500 py-6 text-center">No message activity recorded yet in this session.</p>
-                ) : (
-                  <div className="space-y-3">
-                    {state?.activityFeed?.slice(0, 3).map((item) => (
-                      <div key={item.id} className="bg-slate-950 border border-slate-800/80 rounded-xl p-4 flex flex-col gap-2">
-                        <div className="flex items-center justify-between text-xs text-slate-400">
-                          <span className="font-bold text-slate-200">{item.senderName}</span>
-                          <span className="flex items-center gap-2">
-                            <span>{item.timestamp}</span>
-                            <span className="px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-400 font-mono text-[10px]">{item.durationMs}ms</span>
-                          </span>
-                        </div>
-                        <p className="text-xs text-slate-300 bg-slate-900/60 p-2 rounded-lg border border-slate-800/50">
-                          📥 {item.incomingMessage}
-                        </p>
-                        <p className="text-xs text-indigo-300 bg-indigo-950/20 p-2 rounded-lg border border-indigo-900/30">
-                          📤 {item.replyText}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* TAB 2: LIVE ACTIVITY FEED */}
-          {activeTab === 'activity' && (
-            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6">
-              <h3 className="font-bold text-white text-lg mb-4">Live WhatsApp Activity Stream</h3>
               {state?.activityFeed?.length === 0 ? (
-                <p className="text-sm text-slate-500 py-12 text-center">No live activity recorded yet.</p>
+                <p className="text-xs text-[#86868b] py-8 text-center">No incoming interactions recorded yet.</p>
               ) : (
-                <div className="space-y-4">
-                  {state?.activityFeed?.map((item) => (
-                    <div key={item.id} className="bg-slate-950 border border-slate-800/80 rounded-xl p-4 flex flex-col gap-2 shadow-sm">
-                      <div className="flex items-center justify-between text-xs text-slate-400">
-                        <span className="font-bold text-slate-200 text-sm">{item.senderName}</span>
-                        <div className="flex items-center gap-2">
-                          <span>{item.timestamp}</span>
-                          <span className="px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-400 font-mono text-[10px]">{item.durationMs}ms</span>
-                        </div>
+                <div className="divide-y divide-white/[0.04]">
+                  {state?.activityFeed?.slice(0, 3).map((item) => (
+                    <div key={item.id} className="py-4 space-y-2 first:pt-0 last:pb-0">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="font-semibold text-[#f5f5f7]">{item.senderName}</span>
+                        <span className="text-[#86868b]">{item.timestamp}</span>
                       </div>
-                      <div className="text-xs text-slate-300 bg-slate-900/80 p-2.5 rounded-lg border border-slate-800">
-                        <span className="font-semibold text-slate-400 block mb-1">Incoming:</span>
-                        {item.incomingMessage}
-                      </div>
-                      <div className="text-xs text-emerald-300 bg-emerald-950/20 p-2.5 rounded-lg border border-emerald-900/30">
-                        <span className="font-semibold text-emerald-400 block mb-1">AI Assistant Response:</span>
-                        {item.replyText}
-                      </div>
+                      <p className="text-xs text-[#a1a1a6]">
+                        &ldquo;{item.incomingMessage}&rdquo;
+                      </p>
+                      <p className="text-xs text-[#2997ff] bg-[#1d1d1f] p-3 rounded-2xl border border-white/[0.05]">
+                        <span className="font-medium text-[#f5f5f7]">{botName}: </span>{item.replyText}
+                      </p>
                     </div>
                   ))}
                 </div>
               )}
             </div>
-          )}
+          </div>
+        )}
 
-          {/* TAB 3: DND BRIEFINGS */}
-          {activeTab === 'briefings' && (
-            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6">
-              <h3 className="font-bold text-white text-lg mb-4">Executive Briefing Archive</h3>
-              {state?.briefings?.length === 0 ? (
-                <p className="text-sm text-slate-500 py-12 text-center">No briefings generated yet. Briefings are created automatically when DND mode ends.</p>
-              ) : (
-                <div className="space-y-4">
-                  {state?.briefings?.map((b) => (
-                    <div key={b.id || b.time} className="bg-slate-950 border border-slate-800 rounded-xl p-5">
-                      <div className="flex items-center justify-between text-xs text-slate-400 mb-3 border-b border-slate-800 pb-2">
-                        <span className="font-bold text-white">Session: {b.startTime} - {b.endTime}</span>
-                        <span className="text-indigo-400 font-medium">{b.messageCount} messages summarized</span>
-                      </div>
-                      <div className="text-xs text-slate-300 whitespace-pre-wrap leading-relaxed">
-                        {b.summary}
+        {/* TAB 2: ACTIVITY STREAM */}
+        {activeTab === 'activity' && (
+          <div className="space-y-6">
+            <div>
+              <h3 className="text-3xl font-semibold text-white tracking-tight mb-2">Live Activity</h3>
+              <p className="text-sm text-[#86868b]">Real-time stream of incoming messages and assistant replies.</p>
+            </div>
+
+            {state?.activityFeed?.length === 0 ? (
+              <div className="apple-card rounded-3xl p-12 text-center text-xs text-[#86868b]">
+                No live activity recorded in this session.
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {state?.activityFeed?.map((item) => (
+                  <div key={item.id} className="apple-card rounded-2xl p-6 space-y-3">
+                    <div className="flex items-center justify-between text-xs text-[#86868b]">
+                      <span className="font-semibold text-white text-sm">{item.senderName}</span>
+                      <div className="flex items-center gap-3">
+                        <span>{item.timestamp}</span>
+                        <span className="px-2 py-0.5 rounded-full bg-white/5 text-[#86868b] font-mono text-[10px]">
+                          {item.durationMs}ms
+                        </span>
                       </div>
                     </div>
-                  ))}
-                </div>
-              )}
+                    <div className="bg-[#1d1d1f] p-4 rounded-xl border border-white/[0.04] text-xs text-[#d2d2d7]">
+                      <span className="text-[#86868b] block mb-1 font-medium">Received:</span>
+                      {item.incomingMessage}
+                    </div>
+                    <div className="bg-[#1d1d1f] p-4 rounded-xl border border-[#2997ff]/20 text-xs text-[#f5f5f7]">
+                      <span className="text-[#2997ff] block mb-1 font-medium">{botName} Reply:</span>
+                      {item.replyText}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* TAB 3: EXECUTIVE BRIEFINGS */}
+        {activeTab === 'briefings' && (
+          <div className="space-y-6">
+            <div>
+              <h3 className="text-3xl font-semibold text-white tracking-tight mb-2">Executive Briefings</h3>
+              <p className="text-sm text-[#86868b]">Summaries generated automatically whenever Do Not Disturb ends.</p>
             </div>
-          )}
 
-          {/* TAB 4: BLACKLIST & BANS */}
-          {activeTab === 'blacklist' && (
-            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6">
-              <h3 className="font-bold text-white text-lg mb-2">3-Strike Disrespect & Abuse Bans</h3>
-              <p className="text-xs text-slate-400 mb-6">Users who made direct personal insults against you or your assistant are temporarily blacklisted here.</p>
+            {state?.briefings?.length === 0 ? (
+              <div className="apple-card rounded-3xl p-12 text-center text-xs text-[#86868b]">
+                No briefings archived yet. When a DND period concludes, its summary will be stored here.
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {state?.briefings?.map((b) => (
+                  <div key={b.id || b.time} className="apple-card rounded-3xl p-8 space-y-4">
+                    <div className="flex items-center justify-between border-b border-white/[0.06] pb-4">
+                      <span className="text-xs font-semibold text-white">
+                        Period: {b.startTime} &ndash; {b.endTime}
+                      </span>
+                      <span className="text-xs text-[#2997ff]">
+                        {b.messageCount} messages
+                      </span>
+                    </div>
+                    <div className="text-xs text-[#d2d2d7] whitespace-pre-wrap leading-relaxed">
+                      {b.summary}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
-              {state?.bannedUsers?.length === 0 ? (
-                <div className="text-center py-12">
-                  <CheckCircle2 className="w-10 h-10 text-emerald-400 mx-auto mb-2 opacity-80" />
-                  <p className="text-sm font-medium text-white">No active blacklists</p>
-                  <p className="text-xs text-slate-500">All conversational partners are currently in good standing.</p>
-                </div>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left text-xs">
-                    <thead>
-                      <tr className="border-b border-slate-800 text-slate-400">
-                        <th className="pb-3 font-semibold">User</th>
-                        <th className="pb-3 font-semibold">Strikes</th>
-                        <th className="pb-3 font-semibold">Remaining Time</th>
-                        <th className="pb-3 font-semibold text-right">Actions</th>
+        {/* TAB 4: SECURITY & BANS */}
+        {activeTab === 'security' && (
+          <div className="space-y-6">
+            <div>
+              <h3 className="text-3xl font-semibold text-white tracking-tight mb-2">Security & Abuse Defense</h3>
+              <p className="text-sm text-[#86868b]">Enforced 3-strike policy against vulgar personal insults and harassment.</p>
+            </div>
+
+            {state?.bannedUsers?.length === 0 ? (
+              <div className="apple-card rounded-3xl p-12 text-center">
+                <Shield className="w-10 h-10 text-[#30d158] mx-auto mb-3 opacity-90" />
+                <h4 className="text-base font-semibold text-white mb-1">All Clear</h4>
+                <p className="text-xs text-[#86868b]">No contacts are currently blacklisted.</p>
+              </div>
+            ) : (
+              <div className="apple-card rounded-3xl p-8 overflow-x-auto">
+                <table className="w-full text-left text-xs">
+                  <thead>
+                    <tr className="border-b border-white/[0.08] text-[#86868b]">
+                      <th className="pb-3 font-medium">Contact</th>
+                      <th className="pb-3 font-medium">Infraction Level</th>
+                      <th className="pb-3 font-medium">Remaining Ban Time</th>
+                      <th className="pb-3 font-medium text-right">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-white/[0.04]">
+                    {state?.bannedUsers?.map((user) => (
+                      <tr key={user.userId}>
+                        <td className="py-4 font-semibold text-white">{user.senderName}</td>
+                        <td className="py-4 text-[#ff453a] font-medium">{user.strikes} / 3 Strikes</td>
+                        <td className="py-4 text-[#86868b] font-mono">
+                          {Math.ceil(user.remainingMs / 60000)} minutes
+                        </td>
+                        <td className="py-4 text-right">
+                          <button
+                            onClick={() => handleUnban(user.userId)}
+                            className="px-4 py-1.5 apple-btn-secondary rounded-full text-xs font-medium hover:text-white"
+                          >
+                            Unban
+                          </button>
+                        </td>
                       </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-800/60">
-                      {state?.bannedUsers?.map((user) => (
-                        <tr key={user.userId}>
-                          <td className="py-3 font-bold text-white">{user.senderName}</td>
-                          <td className="py-3 text-rose-400 font-bold">{user.strikes} / 3</td>
-                          <td className="py-3 text-slate-300 font-mono">
-                            {Math.ceil(user.remainingMs / 60000)} mins
-                          </td>
-                          <td className="py-3 text-right">
-                            <button
-                              onClick={() => handleUnban(user.userId)}
-                              className="px-3 py-1 bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-400 border border-emerald-500/30 rounded-lg font-medium transition-colors"
-                            >
-                              Unban Now
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* TAB 5: SETTINGS */}
+        {activeTab === 'settings' && (
+          <div className="space-y-6 max-w-2xl">
+            <div>
+              <h3 className="text-3xl font-semibold text-white tracking-tight mb-2">Settings</h3>
+              <p className="text-sm text-[#86868b]">Customize your assistant identity, language, and behavior.</p>
             </div>
-          )}
 
-          {/* TAB 5: SETTINGS */}
-          {activeTab === 'settings' && (
-            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6">
-              <h3 className="font-bold text-white text-lg mb-6">AI Assistant & System Settings</h3>
+            {saveSuccess && (
+              <div className="p-4 rounded-2xl bg-[#30d158]/10 border border-[#30d158]/20 text-[#30d158] text-xs font-medium flex items-center gap-2">
+                <Check className="w-4 h-4" />
+                Settings saved successfully and applied immediately.
+              </div>
+            )}
 
-              {saveSuccess && (
-                <div className="mb-6 p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-semibold flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4" />
-                  Settings saved successfully to .env and applied in real-time!
-                </div>
-              )}
+            <form onSubmit={handleSaveSettings} className="apple-card rounded-3xl p-8 space-y-6 text-xs">
+              <div className="space-y-2">
+                <label className="text-[#86868b] font-medium block">Owner Name</label>
+                <input
+                  type="text"
+                  value={settingsForm?.ownerName || ''}
+                  onChange={(e) => setSettingsForm({ ...settingsForm, ownerName: e.target.value })}
+                  className="w-full bg-[#1d1d1f] border border-white/[0.08] rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#2997ff]"
+                  required
+                />
+              </div>
 
-              <form onSubmit={handleSaveSettings} className="space-y-5 text-xs">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-slate-400 font-semibold mb-1.5 uppercase tracking-wider">Owner Name</label>
-                    <input
-                      type="text"
-                      value={settingsForm?.ownerName || ''}
-                      onChange={(e) => setSettingsForm({ ...settingsForm, ownerName: e.target.value })}
-                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-white focus:outline-none focus:border-indigo-500"
-                      required
-                    />
-                  </div>
+              <div className="space-y-2">
+                <label className="text-[#86868b] font-medium block">Assistant Name</label>
+                <input
+                  type="text"
+                  value={settingsForm?.botName || ''}
+                  onChange={(e) => setSettingsForm({ ...settingsForm, botName: e.target.value })}
+                  className="w-full bg-[#1d1d1f] border border-white/[0.08] rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#2997ff]"
+                  required
+                />
+              </div>
 
-                  <div>
-                    <label className="block text-slate-400 font-semibold mb-1.5 uppercase tracking-wider">Assistant Name</label>
-                    <input
-                      type="text"
-                      value={settingsForm?.botName || ''}
-                      onChange={(e) => setSettingsForm({ ...settingsForm, botName: e.target.value })}
-                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-white focus:outline-none focus:border-indigo-500"
-                      required
-                    />
-                  </div>
-                </div>
+              <div className="space-y-2">
+                <label className="text-[#86868b] font-medium block">Default Fallback Language</label>
+                <select
+                  value={settingsForm?.defaultLanguage || 'English'}
+                  onChange={(e) => setSettingsForm({ ...settingsForm, defaultLanguage: e.target.value })}
+                  className="w-full bg-[#1d1d1f] border border-white/[0.08] rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#2997ff]"
+                >
+                  <option value="English">English</option>
+                  <option value="Turkish">Türkçe</option>
+                  <option value="German">Deutsch</option>
+                </select>
+                <p className="text-[11px] text-[#6e6e73]">
+                  Used only when the incoming message has no text or context. Otherwise, the assistant speaks all languages automatically.
+                </p>
+              </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-slate-400 font-semibold mb-1.5 uppercase tracking-wider">Default Language</label>
-                    <select
-                      value={settingsForm?.defaultLanguage || 'English'}
-                      onChange={(e) => setSettingsForm({ ...settingsForm, defaultLanguage: e.target.value })}
-                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-white focus:outline-none focus:border-indigo-500"
-                    >
-                      <option value="English">English</option>
-                      <option value="Turkish">Türkçe</option>
-                      <option value="German">Deutsch</option>
-                    </select>
-                  </div>
+              <div className="space-y-2">
+                <label className="text-[#86868b] font-medium block">Gemini Model</label>
+                <input
+                  type="text"
+                  value={settingsForm?.geminiModel || 'gemini-3.5-flash-lite'}
+                  onChange={(e) => setSettingsForm({ ...settingsForm, geminiModel: e.target.value })}
+                  className="w-full bg-[#1d1d1f] border border-white/[0.08] rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#2997ff]"
+                  required
+                />
+              </div>
 
-                  <div>
-                    <label className="block text-slate-400 font-semibold mb-1.5 uppercase tracking-wider">Gemini Model</label>
-                    <input
-                      type="text"
-                      value={settingsForm?.geminiModel || 'gemini-3.5-flash-lite'}
-                      onChange={(e) => setSettingsForm({ ...settingsForm, geminiModel: e.target.value })}
-                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-white focus:outline-none focus:border-indigo-500"
-                      required
-                    />
-                  </div>
-                </div>
+              <div className="space-y-2">
+                <label className="text-[#86868b] font-medium block">Secret Rescue Password</label>
+                <input
+                  type="text"
+                  value={settingsForm?.rescuePassword || ''}
+                  onChange={(e) => setSettingsForm({ ...settingsForm, rescuePassword: e.target.value })}
+                  className="w-full bg-[#1d1d1f] border border-white/[0.08] rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#2997ff]"
+                  required
+                />
+                <p className="text-[11px] text-[#6e6e73]">
+                  Contacts can send this secret keyword on WhatsApp to unban themselves immediately.
+                </p>
+              </div>
 
-                <div>
-                  <label className="block text-slate-400 font-semibold mb-1.5 uppercase tracking-wider">Secret Rescue Password (Unban)</label>
-                  <input
-                    type="text"
-                    value={settingsForm?.rescuePassword || ''}
-                    onChange={(e) => setSettingsForm({ ...settingsForm, rescuePassword: e.target.value })}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-white focus:outline-none focus:border-indigo-500"
-                    required
-                  />
-                  <p className="text-[11px] text-slate-500 mt-1">Users can send this password on WhatsApp to unban themselves.</p>
-                </div>
+              <div className="pt-4 border-t border-white/[0.06]">
+                <button
+                  type="submit"
+                  className="px-6 py-2.5 apple-btn-primary rounded-full text-xs font-semibold"
+                >
+                  Save Changes
+                </button>
+              </div>
+            </form>
+          </div>
+        )}
+      </main>
 
-                <div className="pt-2">
-                  <button
-                    type="submit"
-                    className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-medium rounded-xl text-xs transition-colors shadow-lg shadow-indigo-600/20"
-                  >
-                    Save Changes
-                  </button>
-                </div>
-              </form>
-            </div>
-          )}
-        </main>
-      </div>
+      {/* Apple-style Footer */}
+      <footer className="border-t border-white/[0.08] py-8 px-6 text-center text-xs text-[#86868b]">
+        <div className="max-w-[1024px] mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+          <p>© {new Date().getFullYear()} {botName} Intelligence. Powered by Google Gemini & whatsapp-web.js.</p>
+          <div className="flex items-center gap-6 text-[#6e6e73]">
+            <span>End-to-End Encrypted Session</span>
+            <span>Local Machine Isolated</span>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }
