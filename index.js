@@ -37,9 +37,20 @@ const calendar = require('./calendar');
 const DashboardServer = require('./dashboard-server');
 
 // Dynamic configuration from environment
-const getOwnerName = () => process.env.OWNER_NAME || 'Owner';
-const getBotName = () => process.env.BOT_NAME || 'Assistant';
-const DEFAULT_LANGUAGE = process.env.DEFAULT_LANGUAGE || 'English';
+Object.defineProperty(global, 'OWNER_NAME', {
+  get: () => process.env.OWNER_NAME || 'Owner',
+  configurable: true
+});
+Object.defineProperty(global, 'BOT_NAME', {
+  get: () => process.env.BOT_NAME || 'Assistant',
+  configurable: true
+});
+Object.defineProperty(global, 'DEFAULT_LANGUAGE', {
+  get: () => process.env.DEFAULT_LANGUAGE || 'English',
+  configurable: true
+});
+const getOwnerName = () => OWNER_NAME;
+const getBotName = () => BOT_NAME;
 const replyToGroups = process.env.REPLY_TO_GROUPS === 'true';
 const onlyReplyInDnd = process.env.ONLY_REPLY_IN_DND !== 'false';
 const customChromePath = process.env.CHROME_PATH || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
