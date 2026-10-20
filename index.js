@@ -95,27 +95,35 @@ const dashboardServer = new DashboardServer({
       ? newSettings.onlyReplyInDnd 
       : ((typeof newSettings.ONLY_REPLY_IN_DND === 'boolean') ? newSettings.ONLY_REPLY_IN_DND : undefined);
 
-    if (owner) {
+    const changes = [];
+
+    if (owner && owner !== process.env.OWNER_NAME) {
+      changes.push(`Sahip İsmi (Owner): "${process.env.OWNER_NAME || 'Owner'}" ➔ "${owner}"`);
       envRaw = envRaw.replace(/OWNER_NAME=.*/g, `OWNER_NAME="${owner}"`);
       process.env.OWNER_NAME = owner;
     }
-    if (bot) {
+    if (bot && bot !== process.env.BOT_NAME) {
+      changes.push(`Asistan İsmi (Bot): "${process.env.BOT_NAME || 'Assistant'}" ➔ "${bot}"`);
       envRaw = envRaw.replace(/BOT_NAME=.*/g, `BOT_NAME="${bot}"`);
       process.env.BOT_NAME = bot;
     }
-    if (lang) {
+    if (lang && lang !== process.env.DEFAULT_LANGUAGE) {
+      changes.push(`Varsayılan Dil (Language): "${process.env.DEFAULT_LANGUAGE || 'English'}" ➔ "${lang}"`);
       envRaw = envRaw.replace(/DEFAULT_LANGUAGE=.*/g, `DEFAULT_LANGUAGE="${lang}"`);
       process.env.DEFAULT_LANGUAGE = lang;
     }
-    if (model) {
+    if (model && model !== process.env.GEMINI_MODEL) {
+      changes.push(`Gemini Modeli: "${process.env.GEMINI_MODEL || 'gemini-3.5-flash-lite'}" ➔ "${model}"`);
       envRaw = envRaw.replace(/GEMINI_MODEL=.*/g, `GEMINI_MODEL=${model}`);
       process.env.GEMINI_MODEL = model;
     }
-    if (typeof dndOnly === 'boolean') {
+    if (typeof dndOnly === 'boolean' && String(dndOnly) !== process.env.ONLY_REPLY_IN_DND) {
+      changes.push(`Sadece DND Modunda Yanıt: "${process.env.ONLY_REPLY_IN_DND}" ➔ "${dndOnly}"`);
       envRaw = envRaw.replace(/ONLY_REPLY_IN_DND=.*/g, `ONLY_REPLY_IN_DND=${dndOnly}`);
       process.env.ONLY_REPLY_IN_DND = String(dndOnly);
     }
-    if (pass !== undefined) {
+    if (pass !== undefined && pass !== process.env.RESCUE_PASSWORD) {
+      changes.push(`Kurtarma Şifresi (Rescue Password): "${process.env.RESCUE_PASSWORD || 'unbanme'}" ➔ "${pass}"`);
       if (envRaw.includes('RESCUE_PASSWORD=')) {
         envRaw = envRaw.replace(/RESCUE_PASSWORD=.*/g, `RESCUE_PASSWORD="${pass}"`);
       } else {
@@ -126,7 +134,16 @@ const dashboardServer = new DashboardServer({
     
     fs.writeFileSync(envFilePath, envRaw, 'utf8');
     require('dotenv').config({ override: true });
-    console.log(`⚙️ [SETTINGS] System configuration updated. Rescue Password is now: "${pass || process.env.RESCUE_PASSWORD}"`);
+
+    if (changes.length > 0) {
+      console.log('\n╔═══════════════════════════════════════════════════════════════╗');
+      console.log('║ ⚡ [CANLI GÜNCELLEME] Dashboard Ayarları Başarıyla Değişti:    ║');
+      console.log('╠═══════════════════════════════════════════════════════════════╣');
+      changes.forEach(c => console.log(`║ ➜ ${c}`));
+      console.log('╚═══════════════════════════════════════════════════════════════╝\n');
+    } else {
+      console.log('ℹ️ [AYARLAR] Dashboard ayarları kaydedildi (herhangi bir değişiklik yapılmadı).');
+    }
   },
   getSystemState: () => {
     // Mask sensitive API keys before exposing to frontend
