@@ -267,6 +267,46 @@ class DashboardServer {
         return;
       }
 
+      // Serve static frontend files from frontend/dist if available
+      const staticDir = path.join(__dirname, 'frontend/dist');
+      if (req.method === 'GET' && fs.existsSync(staticDir)) {
+        let safePath = path.normalize(pathname).replace(/^(\.\.[\/\\])+/, '');
+        if (safePath === '/' || safePath === '') safePath = '/index.html';
+        let filePath = path.join(staticDir, safePath);
+
+        // Fallback to index.html for SPA client-side routing
+        if (!fs.existsSync(filePath) || fs.statSync(filePath).isDirectory()) {
+          filePath = path.join(staticDir, 'index.html');
+        }
+
+        if (fs.existsSync(filePath)) {
+          const ext = path.extname(filePath).toLowerCase();
+          const mimeTypes = {
+            '.html': 'text/html; charset=utf-8',
+            '.js': 'application/javascript; charset=utf-8',
+            '.mjs': 'application/javascript; charset=utf-8',
+            '.css': 'text/css; charset=utf-8',
+            '.json': 'application/json',
+            '.svg': 'image/svg+xml',
+            '.png': 'image/png',
+            '.jpg': 'image/jpeg',
+            '.jpeg': 'image/jpeg',
+            '.ico': 'image/x-icon',
+            '.woff2': 'font/woff2',
+            '.woff': 'font/woff',
+            '.ttf': 'font/ttf'
+          };
+          const contentType = mimeTypes[ext] || 'application/octet-stream';
+          res.writeHead(200, {
+            'Content-Type': contentType,
+            'X-Content-Type-Options': 'nosniff',
+            'Cache-Control': ext === '.html' ? 'no-cache' : 'public, max-age=31536000, immutable'
+          });
+          fs.createReadStream(filePath).pipe(res);
+          return;
+        }
+      }
+
       return this._sendJson(res, 404, { error: 'Endpoint not found.' });
     });
 

@@ -20,9 +20,11 @@ import {
 
 const getApiBase = () => {
   if (typeof window !== 'undefined' && window.location) {
-    const proto = window.location.protocol;
-    const hostname = window.location.hostname;
-    return `${proto}//${hostname}:3000`;
+    // If running under Vite dev server (port 5173), target backend port 3000
+    if (window.location.port === '5173') {
+      return `${window.location.protocol}//${window.location.hostname}:3000`;
+    }
+    return window.location.origin;
   }
   return 'http://localhost:3000';
 };
@@ -30,8 +32,10 @@ const getApiBase = () => {
 const getWsUrl = (token) => {
   if (typeof window !== 'undefined' && window.location) {
     const proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const hostname = window.location.hostname;
-    return `${proto}//${hostname}:3000?token=${encodeURIComponent(token)}`;
+    if (window.location.port === '5173') {
+      return `${proto}//${window.location.hostname}:3000?token=${encodeURIComponent(token)}`;
+    }
+    return `${proto}//${window.location.host}?token=${encodeURIComponent(token)}`;
   }
   return `ws://localhost:3000?token=${encodeURIComponent(token)}`;
 };
