@@ -10,7 +10,6 @@ const { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } = require('@googl
 class GeminiService {
   constructor() {
     this.apiKey = process.env.GEMINI_API_KEY || '';
-    this.primaryModel = process.env.GEMINI_MODEL || 'gemini-3.5-flash-lite';
     this.fallbackModels = [
       'gemini-3.5-flash-lite',
       'gemini-flash-lite-latest',
@@ -18,11 +17,6 @@ class GeminiService {
       'gemini-flash-latest'
     ];
 
-    // Dynamic Assistant & Owner names from environment configuration
-    this.ownerName = process.env.OWNER_NAME || 'Owner';
-    this.botName = process.env.BOT_NAME || 'Assistant';
-    this.defaultLanguage = process.env.DEFAULT_LANGUAGE || 'English';
-    
     // Per-user chat history: userId -> Array of { role: 'user' | 'model', parts: [{ text }] }
     this.historyMap = new Map();
     this.historyTtlMs = 30 * 60 * 1000; // 30 minutes TTL
@@ -46,6 +40,23 @@ class GeminiService {
     } else {
       console.warn('⚠️ [WARNING] GEMINI_API_KEY is not defined. Please check your .env file.');
     }
+  }
+
+  // Dynamic getters to ensure instant real-time updates when changed from Dashboard
+  get ownerName() {
+    return process.env.OWNER_NAME || 'Owner';
+  }
+
+  get botName() {
+    return process.env.BOT_NAME || 'Assistant';
+  }
+
+  get defaultLanguage() {
+    return process.env.DEFAULT_LANGUAGE || 'English';
+  }
+
+  get primaryModel() {
+    return process.env.GEMINI_MODEL || 'gemini-3.5-flash-lite';
   }
 
   /**

@@ -37,8 +37,8 @@ const calendar = require('./calendar');
 const DashboardServer = require('./dashboard-server');
 
 // Dynamic configuration from environment
-const OWNER_NAME = process.env.OWNER_NAME || 'Owner';
-const BOT_NAME = process.env.BOT_NAME || 'Assistant';
+const getOwnerName = () => process.env.OWNER_NAME || 'Owner';
+const getBotName = () => process.env.BOT_NAME || 'Assistant';
 const DEFAULT_LANGUAGE = process.env.DEFAULT_LANGUAGE || 'English';
 const replyToGroups = process.env.REPLY_TO_GROUPS === 'true';
 const onlyReplyInDnd = process.env.ONLY_REPLY_IN_DND !== 'false';
@@ -583,12 +583,12 @@ client.on('message_create', async (msg) => {
           return;
         } else {
           console.log(`ℹ️ [Voice Note] Media could not be decoded.`);
-          await msg.reply(`I've received your voice note and will notify ${OWNER_NAME} as soon as they are available.`);
+          await msg.reply(`I've received your voice note and will notify ${getOwnerName()} as soon as they are available.`);
           return;
         }
       } catch (audioErr) {
         console.error('❌ Error processing voice note:', audioErr);
-        await msg.reply(`I've received your voice note and will notify ${OWNER_NAME} as soon as they are available.`);
+        await msg.reply(`I've received your voice note and will notify ${getOwnerName()} as soon as they are available.`);
         return;
       }
     }
@@ -625,12 +625,12 @@ client.on('message_create', async (msg) => {
           return;
         } else {
           console.log(`ℹ️ [Image] Image could not be decoded.`);
-          await msg.reply(`I've received your image and will forward it to ${OWNER_NAME} to review.`);
+          await msg.reply(`I've received your image and will forward it to ${getOwnerName()} to review.`);
           return;
         }
       } catch (imgErr) {
         console.error('❌ Error processing image:', imgErr);
-        await msg.reply(`I've received your image and will forward it to ${OWNER_NAME}.`);
+        await msg.reply(`I've received your image and will forward it to ${getOwnerName()}.`);
         return;
       }
     }
@@ -735,7 +735,7 @@ client.on('message_create', async (msg) => {
 
         let strikeDirective = '';
         if (hadStrike1) {
-          strikeDirective = `[DISRESPECT_LEVEL: STRIKE_1 (PERSONAL_INSULT_DETECTED)]\nThe user made a direct personal insult against ${OWNER_NAME} or you. Deliver a sharp, witty reprimand, put them in their place with cold dignity and unquestioned authority, warning them to watch their language.`;
+          strikeDirective = `[DISRESPECT_LEVEL: STRIKE_1 (PERSONAL_INSULT_DETECTED)]\nThe user made a direct personal insult against ${getOwnerName()} or you. Deliver a sharp, witty reprimand, put them in their place with cold dignity and unquestioned authority, warning them to watch their language.`;
         }
 
         const startTime = Date.now();
