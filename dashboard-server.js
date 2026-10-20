@@ -240,8 +240,15 @@ class DashboardServer {
             if (this.onSaveSettings) {
               await this.onSaveSettings(newSettings);
             }
-            this.broadcast('settings_updated', { message: 'Settings successfully updated.' });
-            return this._sendJson(res, 200, { success: true, message: 'Settings saved.' });
+            const updatedState = this.getSystemState ? this.getSystemState() : null;
+            if (updatedState) {
+              this.broadcast('state_update', updatedState);
+            }
+            return this._sendJson(res, 200, { 
+              success: true, 
+              message: 'Settings saved.',
+              settings: updatedState ? updatedState.settings : newSettings
+            });
           } catch (e) {
             return this._sendJson(res, 400, { error: 'Failed to save settings: ' + e.message });
           }

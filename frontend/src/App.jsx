@@ -63,9 +63,11 @@ export default function App() {
         ws.onmessage = (event) => {
           try {
             const data = JSON.parse(event.data);
-            if (data.event === 'initial_state') {
+            if (data.event === 'initial_state' || data.event === 'state_update') {
               setState(data.payload);
-              setSettingsForm(data.payload.settings);
+              if (data.payload?.settings) {
+                setSettingsForm(data.payload.settings);
+              }
             } else if (data.event === 'qr') {
               setState(prev => prev ? { ...prev, qrCode: data.payload.qr, status: 'WAITING_FOR_QR' } : prev);
             } else if (data.event === 'authenticated') {
@@ -161,10 +163,14 @@ export default function App() {
   const handleSaveSettings = async (e) => {
     e.preventDefault();
     try {
-      await apiFetch('/api/settings', {
+      const res = await apiFetch('/api/settings', {
         method: 'POST',
         body: JSON.stringify(settingsForm)
       });
+      if (res && res.settings) {
+        setState(prev => prev ? { ...prev, settings: res.settings } : prev);
+        setSettingsForm(res.settings);
+      }
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 3000);
     } catch (_) {}
