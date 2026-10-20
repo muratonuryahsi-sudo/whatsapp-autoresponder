@@ -199,6 +199,7 @@ async function runSetupWizard() {
     const cleanOwner = ownerName.toLowerCase().replace(/[^a-z0-9]/g, '') || 'owner';
     const cleanBot = botName.toLowerCase().replace(/[^a-z0-9]/g, '') || 'bot';
     const ntfyDndTopic = existing.NTFY_DND_TOPIC || `${cleanBot}-dnd-${cleanOwner}-${randomSuffix}`;
+    const dashboardApiKey = existing.DASHBOARD_API_KEY || crypto.randomBytes(16).toString('hex');
 
     const envContent = `# ========================================================
 # WhatsApp AI Auto-Responder Configuration
@@ -226,6 +227,9 @@ DND_SECRET="${dndSecret}"
 
 # Unique Cloud ntfy.sh Topic (globally unique to prevent triggering other people's assistants)
 NTFY_DND_TOPIC="${ntfyDndTopic}"
+
+# Dashboard Authentication Key (Secures WebSocket & REST API from unauthorized access)
+DASHBOARD_API_KEY="${dashboardApiKey}"
 
 # Secret unban password for blacklisted users
 RESCUE_PASSWORD="${rescuePassword}"
