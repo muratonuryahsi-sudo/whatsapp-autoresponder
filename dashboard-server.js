@@ -195,76 +195,80 @@ class DashboardServer {
       // ------------------------------------------------------------------
       // Protected Dashboard REST API Routes (Requires DASHBOARD_API_KEY)
       // ------------------------------------------------------------------
-      if (!this._isAuthorized(req)) {
-        return this._sendJson(res, 401, { error: 'Unauthorized: Valid DASHBOARD_API_KEY required.' });
-      }
+      if (pathname.startsWith('/api/')) {
+        if (!this._isAuthorized(req)) {
+          return this._sendJson(res, 401, { error: 'Unauthorized: Valid DASHBOARD_API_KEY required.' });
+        }
 
-      // GET /api/state - Full system state for dashboard hydration
-      if (req.method === 'GET' && pathname === '/api/state') {
-        const state = this.getSystemState ? this.getSystemState() : {};
-        return this._sendJson(res, 200, state);
-      }
+        // GET /api/state - Full system state for dashboard hydration
+        if (req.method === 'GET' && pathname === '/api/state') {
+          const state = this.getSystemState ? this.getSystemState() : {};
+          return this._sendJson(res, 200, state);
+        }
 
-      // POST /api/dnd/toggle - Toggle DND from dashboard switch
-      if (req.method === 'POST' && pathname === '/api/dnd/toggle') {
-        let body = '';
-        req.on('data', chunk => { body += chunk; });
-        req.on('end', async () => {
-          try {
-            const data = JSON.parse(body || '{}');
-            const targetState = typeof data.active === 'boolean' ? data.active : true;
-            if (this.onDndToggle) await this.onDndToggle(targetState, 'Dashboard UI');
-            this.broadcast('dnd_state_changed', { isDndActive: targetState });
-            return this._sendJson(res, 200, { success: true, isDndActive: targetState });
-          } catch (e) {
-            return this._sendJson(res, 400, { error: 'Invalid JSON payload.' });
-          }
-        });
-        return;
-      }
-
-      // POST /api/unban - Unban blacklisted user from dashboard table
-      if (req.method === 'POST' && pathname === '/api/unban') {
-        let body = '';
-        req.on('data', chunk => { body += chunk; });
-        req.on('end', async () => {
-          try {
-            const data = JSON.parse(body || '{}');
-            if (!data.userId) return this._sendJson(res, 400, { error: 'userId is required.' });
-            const success = this.onUnbanUser ? this.onUnbanUser(data.userId) : false;
-            this.broadcast('user_unbanned', { userId: data.userId });
-            return this._sendJson(res, 200, { success });
-          } catch (e) {
-            return this._sendJson(res, 400, { error: 'Invalid JSON payload.' });
-          }
-        });
-        return;
-      }
-
-      // POST /api/settings - Update settings securely
-      if (req.method === 'POST' && pathname === '/api/settings') {
-        let body = '';
-        req.on('data', chunk => { body += chunk; });
-        req.on('end', async () => {
-          try {
-            const newSettings = JSON.parse(body || '{}');
-            if (this.onSaveSettings) {
-              await this.onSaveSettings(newSettings);
+        // POST /api/dnd/toggle - Toggle DND from dashboard switch
+        if (req.method === 'POST' && pathname === '/api/dnd/toggle') {
+          let body = '';
+          req.on('data', chunk => { body += chunk; });
+          req.on('end', async () => {
+            try {
+              const data = JSON.parse(body || '{}');
+              const targetState = typeof data.active === 'boolean' ? data.active : true;
+              if (this.onDndToggle) await this.onDndToggle(targetState, 'Dashboard UI');
+              this.broadcast('dnd_state_changed', { isDndActive: targetState });
+              return this._sendJson(res, 200, { success: true, isDndActive: targetState });
+            } catch (e) {
+              return this._sendJson(res, 400, { error: 'Invalid JSON payload.' });
             }
-            const updatedState = this.getSystemState ? this.getSystemState() : null;
-            if (updatedState) {
-              this.broadcast('state_update', updatedState);
+          });
+          return;
+        }
+
+        // POST /api/unban - Unban blacklisted user from dashboard table
+        if (req.method === 'POST' && pathname === '/api/unban') {
+          let body = '';
+          req.on('data', chunk => { body += chunk; });
+          req.on('end', async () => {
+            try {
+              const data = JSON.parse(body || '{}');
+              if (!data.userId) return this._sendJson(res, 400, { error: 'userId is required.' });
+              const success = this.onUnbanUser ? this.onUnbanUser(data.userId) : false;
+              this.broadcast('user_unbanned', { userId: data.userId });
+              return this._sendJson(res, 200, { success });
+            } catch (e) {
+              return this._sendJson(res, 400, { error: 'Invalid JSON payload.' });
             }
-            return this._sendJson(res, 200, { 
-              success: true, 
-              message: 'Settings saved.',
-              settings: updatedState ? updatedState.settings : newSettings
-            });
-          } catch (e) {
-            return this._sendJson(res, 400, { error: 'Failed to save settings: ' + e.message });
-          }
-        });
-        return;
+          });
+          return;
+        }
+
+        // POST /api/settings - Update settings securely
+        if (req.method === 'POST' && pathname === '/api/settings') {
+          let body = '';
+          req.on('data', chunk => { body += chunk; });
+          req.on('end', async () => {
+            try {
+              const newSettings = JSON.parse(body || '{}');
+              if (this.onSaveSettings) {
+                await this.onSaveSettings(newSettings);
+              }
+              const updatedState = this.getSystemState ? this.getSystemState() : null;
+              if (updatedState) {
+                this.broadcast('state_update', updatedState);
+              }
+              return this._sendJson(res, 200, { 
+                success: true, 
+                message: 'Settings saved.',
+                settings: updatedState ? updatedState.settings : newSettings
+              });
+            } catch (e) {
+              return this._sendJson(res, 400, { error: 'Failed to save settings: ' + e.message });
+            }
+          });
+          return;
+        }
+
+        return this._sendJson(res, 404, { error: 'API endpoint not found.' });
       }
 
       // Serve static frontend files from frontend/dist if available
