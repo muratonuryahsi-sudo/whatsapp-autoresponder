@@ -1,8 +1,9 @@
-# 🤖 WhatsApp AI Personal Auto-Responder
-
-A modular, production-ready executive AI assistant for WhatsApp powered by **Google Gemini** and **whatsapp-web.js**. 
-
-Designed to serve as a personal executive assistant for yourself or as a deployable bot for anyone else. It intelligently drafts contextual replies, transcribes voice notes, analyzes images, protects against spam and insults, and seamlessly syncs with your iPhone's Do Not Disturb (DND) / Focus modes.
+<div align="center">
+  <img src="assets/logo.svg" width="96" height="96" alt="MyThanUs Logo" />
+  <h1>MyThanUs — Personal Intelligence</h1>
+  <p><b>Executive WhatsApp AI Assistant & Web Dashboard</b></p>
+  <p>Powered by Google Gemini & whatsapp-web.js</p>
+</div>
 
 ---
 

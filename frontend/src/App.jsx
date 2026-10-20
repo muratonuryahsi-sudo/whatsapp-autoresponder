@@ -175,8 +175,8 @@ export default function App() {
     return (
       <div className="min-h-screen bg-[#000000] flex flex-col justify-center items-center px-4">
         <div className="max-w-[420px] w-full apple-card rounded-3xl p-10 text-center">
-          <div className="w-14 h-14 mx-auto rounded-2xl bg-[#1d1d1f] flex items-center justify-center mb-6 border border-white/10">
-            <Lock className="w-6 h-6 text-[#2997ff]" />
+          <div className="w-14 h-14 mx-auto rounded-2xl bg-[#1d1d1f] flex items-center justify-center mb-6 border border-white/10 p-3">
+            <img src="/logo.svg" alt="MyThanUs Logo" className="w-full h-full object-contain" />
           </div>
 
           <h1 className="text-2xl font-semibold text-white tracking-tight mb-2">
@@ -224,11 +224,14 @@ export default function App() {
       {/* Apple-style Translucent Global Navigation Bar */}
       <header className="sticky top-0 z-50 h-12 apple-glass border-b border-white/[0.08] px-6">
         <div className="max-w-[1024px] mx-auto h-full flex items-center justify-between text-xs font-normal">
-          {/* Brand */}
+          {/* Brand & Logo */}
           <div className="flex items-center gap-3">
+            <div className="w-6 h-6 flex items-center justify-center shrink-0">
+              <img src="/logo.svg" alt="MyThanUs Logo" className="w-full h-full object-contain" />
+            </div>
             <span className="font-semibold text-white tracking-tight text-sm">{botName}</span>
             <span className="text-[#86868b]">|</span>
-            <span className="text-[#86868b]">Personal Intelligence for {ownerName}</span>
+            <span className="text-[#86868b] hidden sm:inline">Personal Intelligence for {ownerName}</span>
           </div>
 
           {/* Navigation Items */}
@@ -280,8 +283,11 @@ export default function App() {
         {/* TAB 1: OVERVIEW HERO */}
         {activeTab === 'overview' && (
           <div className="space-y-12">
-            {/* Apple Hero Headline */}
-            <div className="text-center py-4 max-w-2xl mx-auto">
+            {/* Apple Hero Headline with Logo */}
+            <div className="text-center py-4 max-w-2xl mx-auto flex flex-col items-center">
+              <div className="w-16 h-16 mb-6 rounded-2xl bg-[#161617] border border-white/10 p-3 shadow-2xl flex items-center justify-center">
+                <img src="/logo.svg" alt="MyThanUs Logo" className="w-full h-full object-contain" />
+              </div>
               <h2 className="text-4xl md:text-5xl font-semibold tracking-tight text-white mb-3">
                 {botName}.
               </h2>

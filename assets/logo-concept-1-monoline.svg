@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100%" height="100%">
+  <defs>
+    <linearGradient id="silver-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#8e8e93"/>
+    </linearGradient>
+  </defs>
+  <rect width="100" height="100" fill="#000000" rx="22"/>
+  <!-- Stem -->
+  <path d="M50 82 C50 68 50 56 50 48" stroke="url(#silver-grad)" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+  <!-- Left Leaf -->
+  <path d="M49 55 C40 54 30 48 28 38 C27 30 35 28 41 33 C44 26 51 28 50 36" stroke="url(#silver-grad)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <!-- Right Leaf -->
+  <path d="M51 55 C60 54 70 48 72 38 C73 30 65 28 59 33 C56 26 49 28 50 36" stroke="url(#silver-grad)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <!-- Center Top Leaf -->
+  <path d="M50 48 C44 42 41 32 46 22 C50 16 56 18 57 24 C62 19 68 24 64 32 C61 38 54 44 50 48 Z" stroke="url(#silver-grad)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+</svg>

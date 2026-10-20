@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100%" height="100%">
+  <defs>
+    <!-- Apple Intelligence glowing gradient -->
+    <linearGradient id="ai-glow" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#30d158"/>
+      <stop offset="50%" stop-color="#2997ff"/>
+      <stop offset="100%" stop-color="#bf5af2"/>
+    </linearGradient>
+    <filter id="blur-glow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  <rect width="100" height="100" fill="#000000" rx="22"/>
+  
+  <!-- Single fluid, continuous ribbon forming an abstract parsley loop (Apple Intelligence style) -->
+  <path d="M 28,75 
+           C 35,50 42,42 50,46
+           C 56,49 60,35 52,26
+           C 44,18 36,26 40,36
+           C 42,42 48,45 58,40
+           C 70,34 76,46 70,58
+           C 65,68 54,66 48,58
+           C 44,52 38,58 35,70" 
+        fill="none" 
+        stroke="url(#ai-glow)" 
+        stroke-width="3" 
+        stroke-linecap="round" 
+        stroke-linejoin="round"
+        filter="url(#blur-glow)" />
+
+  <!-- Tiny accent core spark -->
+  <circle cx="50" cy="46" r="2" fill="#ffffff" opacity="0.9"/>
+</svg>

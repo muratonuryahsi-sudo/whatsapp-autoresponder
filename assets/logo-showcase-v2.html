@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>MyThanUs — Modern Non-Crest Logo Concepts (v2)</title>
+  <style>
+    body {
+      background: #000000;
+      color: #f5f5f7;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+      margin: 0;
+      padding: 40px 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    h1 {
+      font-size: 32px;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      margin-bottom: 8px;
+    }
+    p.sub {
+      color: #86868b;
+      font-size: 15px;
+      margin-bottom: 48px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 24px;
+      max-width: 900px;
+      width: 100%;
+    }
+    .card {
+      background: #161617;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 24px;
+      padding: 32px 24px;
+      text-align: center;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .card:hover {
+      border-color: rgba(255, 255, 255, 0.2);
+      transform: translateY(-2px);
+    }
+    .icon-box {
+      width: 110px;
+      height: 110px;
+      margin: 0 auto 24px auto;
+    }
+    .title {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 6px;
+      color: #ffffff;
+    }
+    .desc {
+      font-size: 12px;
+      color: #86868b;
+      line-height: 1.5;
+    }
+    .badge {
+      display: inline-block;
+      margin-top: 14px;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 4px 10px;
+      border-radius: 20px;
+      background: rgba(255,255,255,0.06);
+      color: #a1a1a6;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>MyThanUs (Version 2)</h1>
+  <p class="sub">Kulüp/Arma hissi tamamen silinmiş, ultra modern & asimetrik Apple Intelligence konseptleri</p>
+
+  <div class="grid">
+    <!-- Concept 1 -->
+    <div class="card">
+      <div class="icon-box">
+        <svg viewBox="0 0 100 100" width="100%" height="100%">
+          <defs>
+            <linearGradient id="ai-glow" x1="0%" y1="100%" x2="100%" y2="0%">
+              <stop offset="0%" stop-color="#30d158"/>
+              <stop offset="50%" stop-color="#2997ff"/>
+              <stop offset="100%" stop-color="#bf5af2"/>
+            </linearGradient>
+            <filter id="blur-glow" x="-30%" y="-30%" width="160%" height="160%">
+              <feGaussianBlur stdDeviation="3" result="blur"/>
+              <feMerge>
+                <feMergeNode in="blur"/>
+                <feMergeNode in="SourceGraphic"/>
+              </feMerge>
+            </filter>
+          </defs>
+          <rect width="100" height="100" fill="#1c1c1e" rx="22"/>
+          <path d="M 28,75 C 35,50 42,42 50,46 C 56,49 60,35 52,26 C 44,18 36,26 40,36 C 42,42 48,45 58,40 C 70,34 76,46 70,58 C 65,68 54,66 48,58 C 44,52 38,58 35,70" fill="none" stroke="url(#ai-glow)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" filter="url(#blur-glow)" />
+          <circle cx="50" cy="46" r="2.2" fill="#ffffff"/>
+        </svg>
+      </div>
+      <div class="title">1. Apple Intelligence Ribbon</div>
+      <div class="desc">Yeni Siri / Apple Intelligence ışıklı kurdelesi mantığında; tek ve akışkan bir şeritle soyutlanan maydanoz döngüsü.</div>
+      <span class="badge">Fluid Ribbon</span>
+    </div>
+
+    <!-- Concept 2 -->
+    <div class="card">
+      <div class="icon-box">
+        <svg viewBox="0 0 100 100" width="100%" height="100%">
+          <defs>
+            <linearGradient id="metal-silver" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#ffffff"/>
+              <stop offset="50%" stop-color="#d1d1d6"/>
+              <stop offset="100%" stop-color="#636366"/>
+            </linearGradient>
+          </defs>
+          <rect width="100" height="100" fill="#1c1c1e" rx="22"/>
+          <line x1="30" y1="78" x2="52" y2="48" stroke="url(#metal-silver)" stroke-width="2.5" stroke-linecap="round"/>
+          <polygon points="50,50 36,44 42,32 54,42" fill="none" stroke="url(#metal-silver)" stroke-width="2" stroke-linejoin="round"/>
+          <polygon points="52,44 48,26 62,20 64,36" fill="none" stroke="#2997ff" stroke-width="2" stroke-linejoin="round"/>
+          <polygon points="56,46 72,40 76,52 62,56" fill="none" stroke="url(#metal-silver)" stroke-width="2" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div class="title">2. Linear / Cyber Polygon</div>
+      <div class="desc">Keskin açılı, Linear.app & Tesla tarzı fütüristik geometrik prizma maydanoz yaprakları. Asla armada benzemez.</div>
+      <span class="badge">Sharp Geometry</span>
+    </div>
+
+    <!-- Concept 3 -->
+    <div class="card">
+      <div class="icon-box">
+        <svg viewBox="0 0 100 100" width="100%" height="100%">
+          <rect width="100" height="100" fill="#1c1c1e" rx="22"/>
+          <line x1="32" y1="76" x2="60" y2="34" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/>
+          <polygon points="60,34 52,22 62,14 70,26" fill="#ffffff"/>
+          <polygon points="50,48 38,40 44,30 56,38" fill="rgba(255,255,255,0.7)"/>
+          <polygon points="58,46 72,40 76,52 64,56" fill="rgba(255,255,255,0.3)"/>
+        </svg>
+      </div>
+      <div class="title">3. Swiss Diamond Minimalist</div>
+      <div class="desc">İsviçre lüks saat markaları ve minimalist modern mimari: Asimetrik elmas kesim 3 parça maydanoz yaprağı.</div>
+      <span class="badge">Luxury Watch</span>
+    </div>
+  </div>
+
+</body>
+</html>

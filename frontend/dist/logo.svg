@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100%" height="100%">
+  <defs>
+    <linearGradient id="titanium-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="40%" stop-color="#e5e5ea"/>
+      <stop offset="100%" stop-color="#8e8e93"/>
+    </linearGradient>
+    <linearGradient id="facet-dark" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#aeaeb2"/>
+      <stop offset="100%" stop-color="#48484a"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Clean diagonal titanium stem with precise chamfered end -->
+  <path d="M 32,78 L 56,38" stroke="url(#titanium-grad)" stroke-width="2.5" stroke-linecap="round"/>
+
+  <!-- Top Diamond Leaflet (Precision Chamfered) -->
+  <polygon points="56,38 48,22 60,12 70,26" fill="url(#titanium-grad)"/>
+  <polygon points="56,38 60,12 70,26" fill="url(#facet-dark)" opacity="0.3"/>
+
+  <!-- Left Diamond Leaflet -->
+  <polygon points="46,54 32,46 38,34 52,42" fill="url(#titanium-grad)"/>
+  <polygon points="46,54 38,34 52,42" fill="url(#facet-dark)" opacity="0.35"/>
+
+  <!-- Right Diamond Leaflet -->
+  <polygon points="53,46 69,40 75,52 61,58" fill="url(#titanium-grad)"/>
+  <polygon points="53,46 75,52 61,58" fill="url(#facet-dark)" opacity="0.4"/>
+</svg>

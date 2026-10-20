@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100%" height="100%">
+  <defs>
+    <linearGradient id="apple-white" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#d1d1d6"/>
+    </linearGradient>
+  </defs>
+  <rect width="100" height="100" fill="#000000" rx="22"/>
+  <g fill="url(#apple-white)">
+    <!-- Main stem -->
+    <path d="M49 84 C49.5 70 49.5 56 49.5 50 L50.5 50 C50.5 56 50.5 70 51 84 Z"/>
+    
+    <!-- Left Leaflet -->
+    <path d="M49 56 C38 54 28 46 27 37 C26 31 31 29 36 33 C39 27 45 28 46 34 C48 31 51 33 50 38 C47 44 48 50 49 56 Z"/>
+    
+    <!-- Right Leaflet -->
+    <path d="M51 56 C62 54 72 46 73 37 C74 31 69 29 64 33 C61 27 55 28 54 34 C52 31 49 33 50 38 C53 44 52 50 51 56 Z"/>
+    
+    <!-- Top Crown Leaflet -->
+    <path d="M50 50 C44 44 40 34 44 24 C47 18 53 19 54 25 C58 20 64 22 62 29 C66 31 64 37 60 40 C55 45 52 48 50 50 Z"/>
+  </g>
+</svg>
