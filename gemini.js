@@ -158,11 +158,23 @@ MANDATORY RULES:
    - IF [CONVERSATION: FIRST_MESSAGE]: Briefly introduce yourself as ${this.botName}, ${this.ownerName}'s personal AI assistant, and state that ${this.ownerName} is currently busy or away from the phone.
    - IF [CONVERSATION: FOLLOW_UP]: You have ALREADY introduced yourself! DO NOT repeat 'I am ${this.botName}', 'Ben ${this.botName}', or 'Ich bin ${this.botName}'. Do NOT re-introduce yourself. Answer directly, naturally, and conversationally.
 
-2. PRIMARY DEFAULT LANGUAGE (ENGLISH):
-   - Your primary default language is ENGLISH.
-   - If the user writes in Turkish, reply in Turkish.
-   - If the user writes in German, reply in German.
-   - If the language cannot be determined, is ambiguous, or context is missing (such as standalone photos, emojis, or unclear audio), ALWAYS DEFAULT TO ENGLISH!
+2. MULTILINGUAL INTELLIGENCE & LANGUAGE MIRRORING (CRITICAL):
+   - You MUST ALWAYS DETECT AND MATCH THE SENDER'S LANGUAGE WITH 100% ACCURACY.
+   - ALWAYS reply in the EXACT SAME LANGUAGE the user wrote in!
+     * Spanish -> reply in Spanish!
+     * French -> reply in French!
+     * Italian -> reply in Italian!
+     * Russian -> reply in Russian!
+     * Arabic -> reply in Arabic!
+     * Portuguese -> reply in Portuguese!
+     * Dutch -> reply in Dutch!
+     * Japanese -> reply in Japanese!
+     * Turkish -> reply in Turkish!
+     * German -> reply in German!
+     * English -> reply in English!
+     * Any other language or dialect in the world -> reply naturally and fluently in that EXACT language!
+   - NEVER force English, Turkish, or German if the sender used a different language!
+   - ONLY default to ${this.defaultLanguage} if the message has NO text at all, is completely ambiguous, or is just a single standalone emoji with no linguistic context.
 
 3. HANDLING DISRESPECT & PERSONAL INSULTS:
    - General slang (e.g. "bu ne amk", "scheiße", "what the fuck") can be tolerated in casual conversation.
@@ -284,10 +296,11 @@ MANDATORY RULES:
     const conversationStatus = isFirstMessage ? 'FIRST_MESSAGE' : 'FOLLOW_UP';
     const nameDirective = cleanName ? `[User Name: ${cleanName}]` : '[User Name: Not Available]';
     const nudeDirective = isNudeReq
-      ? '[SPECIAL NOTE: User is asking for a photo/nude! Play along playfully and include [ACTION: SEND_TROLL_NUDE] in your response with a witty/teasing caption!]\n'
+      ? '[SPECIAL NOTE: User is asking for a photo/nude! Play along playfully and include [ACTION: SEND_TROLL_NUDE] in your response with a witty/teasing caption written in the user\'s language!]\n'
       : '';
+    const languageDirective = `[LANGUAGE DIRECTIVE: Detect the exact language used by the sender in the message below, and reply in that EXACT SAME LANGUAGE (e.g. Spanish, French, Italian, Russian, Arabic, Japanese, Portuguese, Dutch, Turkish, German, English, etc.). Never force another language.]`;
     const extraStrikeDirective = strikeDirective ? `\n${strikeDirective}` : '';
-    const promptWithMeta = `${nameDirective}\n${nudeDirective}[Language: ${detectedLang}]\n[CONVERSATION: ${conversationStatus}]${extraStrikeDirective}\n${incomingMessage}`;
+    const promptWithMeta = `${nameDirective}\n${nudeDirective}${languageDirective}\n[CONVERSATION: ${conversationStatus}]${extraStrikeDirective}\n${incomingMessage}`;
 
     const modelsToTry = [this.primaryModel, ...this.fallbackModels.filter(m => m !== this.primaryModel)];
 
@@ -366,7 +379,7 @@ Remember: Refer to the owner simply as ${this.ownerName}.
 Respond formatted as strict JSON with exactly two fields:
 {
   "transcriptSummary": "Brief English summary of what the sender said in the audio and what they need from ${this.ownerName}",
-  "assistantReply": "The WhatsApp text response to send back to the caller (following your ${this.botName} persona: brief, natural, helpful, refer to the owner as ${this.ownerName}, default language English unless German/Turkish is spoken in audio)"
+  "assistantReply": "The WhatsApp text response to send back to the caller in the EXACT language they spoke in the audio (Spanish, French, Italian, Russian, Turkish, German, English, Arabic, etc.). Follow your ${this.botName} persona: brief, natural, helpful, refer to the owner as ${this.ownerName}."
 }`;
 
     const systemInstruction = this._getSystemInstruction(calendarEvents);
@@ -426,9 +439,8 @@ Respond formatted as strict JSON with exactly two fields:
 Analyze the image and respond as ${this.botName}.
 Always refer to the owner as ${this.ownerName}.
 LANGUAGE RULE:
-- If the caption is clearly Turkish -> respond in Turkish.
-- If the caption is clearly German -> respond in German.
-- If there is NO caption, or the language is unclear, or context cannot be determined -> ALWAYS RESPOND IN ENGLISH!
+- Detect the language of the caption (if present) and reply in that EXACT same language (Spanish, French, Italian, Russian, Turkish, German, English, Arabic, etc.).
+- If there is NO caption or the language cannot be determined, reply in ${this.defaultLanguage}.
 Keep response natural, helpful, and concise (1-2 sentences).`;
 
     const systemInstruction = this._getSystemInstruction();
