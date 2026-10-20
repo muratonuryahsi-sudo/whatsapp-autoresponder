@@ -85,15 +85,34 @@ const dashboardServer = new DashboardServer({
     const envFilePath = path.join(__dirname, '.env');
     let envRaw = fs.existsSync(envFilePath) ? fs.readFileSync(envFilePath, 'utf8') : '';
     
-    if (newSettings.OWNER_NAME) envRaw = envRaw.replace(/OWNER_NAME=.*/g, `OWNER_NAME="${newSettings.OWNER_NAME}"`);
-    if (newSettings.BOT_NAME) envRaw = envRaw.replace(/BOT_NAME=.*/g, `BOT_NAME="${newSettings.BOT_NAME}"`);
-    if (newSettings.DEFAULT_LANGUAGE) envRaw = envRaw.replace(/DEFAULT_LANGUAGE=.*/g, `DEFAULT_LANGUAGE="${newSettings.DEFAULT_LANGUAGE}"`);
-    if (newSettings.GEMINI_MODEL) envRaw = envRaw.replace(/GEMINI_MODEL=.*/g, `GEMINI_MODEL=${newSettings.GEMINI_MODEL}`);
-    if (typeof newSettings.ONLY_REPLY_IN_DND === 'boolean') envRaw = envRaw.replace(/ONLY_REPLY_IN_DND=.*/g, `ONLY_REPLY_IN_DND=${newSettings.ONLY_REPLY_IN_DND}`);
-    if (newSettings.RESCUE_PASSWORD) envRaw = envRaw.replace(/RESCUE_PASSWORD=.*/g, `RESCUE_PASSWORD="${newSettings.RESCUE_PASSWORD}"`);
+    if (newSettings.OWNER_NAME) {
+      envRaw = envRaw.replace(/OWNER_NAME=.*/g, `OWNER_NAME="${newSettings.OWNER_NAME}"`);
+      process.env.OWNER_NAME = newSettings.OWNER_NAME;
+    }
+    if (newSettings.BOT_NAME) {
+      envRaw = envRaw.replace(/BOT_NAME=.*/g, `BOT_NAME="${newSettings.BOT_NAME}"`);
+      process.env.BOT_NAME = newSettings.BOT_NAME;
+    }
+    if (newSettings.DEFAULT_LANGUAGE) {
+      envRaw = envRaw.replace(/DEFAULT_LANGUAGE=.*/g, `DEFAULT_LANGUAGE="${newSettings.DEFAULT_LANGUAGE}"`);
+      process.env.DEFAULT_LANGUAGE = newSettings.DEFAULT_LANGUAGE;
+    }
+    if (newSettings.GEMINI_MODEL) {
+      envRaw = envRaw.replace(/GEMINI_MODEL=.*/g, `GEMINI_MODEL=${newSettings.GEMINI_MODEL}`);
+      process.env.GEMINI_MODEL = newSettings.GEMINI_MODEL;
+    }
+    if (typeof newSettings.ONLY_REPLY_IN_DND === 'boolean') {
+      envRaw = envRaw.replace(/ONLY_REPLY_IN_DND=.*/g, `ONLY_REPLY_IN_DND=${newSettings.ONLY_REPLY_IN_DND}`);
+      process.env.ONLY_REPLY_IN_DND = String(newSettings.ONLY_REPLY_IN_DND);
+    }
+    if (newSettings.RESCUE_PASSWORD) {
+      envRaw = envRaw.replace(/RESCUE_PASSWORD=.*/g, `RESCUE_PASSWORD="${newSettings.RESCUE_PASSWORD}"`);
+      process.env.RESCUE_PASSWORD = newSettings.RESCUE_PASSWORD;
+    }
     
     fs.writeFileSync(envFilePath, envRaw, 'utf8');
     require('dotenv').config({ override: true });
+    console.log('⚙️ [SETTINGS] System configuration updated in real-time from Dashboard.');
   },
   getSystemState: () => {
     // Mask sensitive API keys before exposing to frontend

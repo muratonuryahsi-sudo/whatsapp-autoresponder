@@ -12,10 +12,16 @@ class BlacklistService {
     // userId -> { strikes: number, lastStrikeAt: timestamp }
     this.userStrikes = new Map();
 
-    this.ownerName = process.env.OWNER_NAME || 'Owner';
-    this.rescuePassword = (process.env.RESCUE_PASSWORD || 'unbanme').toLowerCase().replace(/[^a-z0-9]/g, '');
     this.initialBanMinutes = 15;
     this.strikeTtlMs = 2 * 60 * 60 * 1000; // Strikes reset after 2 hours of good behavior
+  }
+
+  get ownerName() {
+    return process.env.OWNER_NAME || 'Owner';
+  }
+
+  get rescuePassword() {
+    return (process.env.RESCUE_PASSWORD || 'unbanme').toLowerCase().replace(/[^a-z0-9]/g, '');
   }
 
   /**
