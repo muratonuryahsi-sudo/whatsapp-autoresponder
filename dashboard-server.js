@@ -76,18 +76,29 @@ class DashboardServer {
   }
 
   /**
-   * Safe CORS headers restricted to local development & local web UI.
+   * Validates if origin belongs to localhost, local network (LAN), or private IP.
+   */
+  _isAllowedOrigin(origin) {
+    if (!origin) return true;
+    try {
+      const url = new URL(origin);
+      const host = url.hostname;
+      if (host === 'localhost' || host === '127.0.0.1' || host === '::1') return true;
+      if (host.endsWith('.local')) return true;
+      if (/^192\.168\.\d{1,3}\.\d{1,3}$/.test(host)) return true;
+      if (/^10\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(host)) return true;
+      if (/^172\.(1[6-9]|2\d|3[0-1])\.\d{1,3}\.\d{1,3}$/.test(host)) return true;
+    } catch (_) {}
+    return false;
+  }
+
+  /**
+   * Safe CORS headers restricted to local development, local web UI & mobile LAN access.
    */
   _applyCorsHeaders(req, res) {
     const origin = req.headers.origin;
-    const allowedOrigins = [
-      'http://localhost:5173',
-      'http://127.0.0.1:5173',
-      `http://localhost:${this.port}`,
-      `http://127.0.0.1:${this.port}`
-    ];
 
-    if (origin && allowedOrigins.includes(origin)) {
+    if (origin && this._isAllowedOrigin(origin)) {
       res.setHeader('Access-Control-Allow-Origin', origin);
     } else {
       res.setHeader('Access-Control-Allow-Origin', 'http://localhost:5173');

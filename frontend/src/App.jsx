@@ -18,7 +18,23 @@ import {
   Sparkles
 } from 'lucide-react';
 
-const API_BASE = 'http://localhost:3000';
+const getApiBase = () => {
+  if (typeof window !== 'undefined' && window.location) {
+    const proto = window.location.protocol;
+    const hostname = window.location.hostname;
+    return `${proto}//${hostname}:3000`;
+  }
+  return 'http://localhost:3000';
+};
+
+const getWsUrl = (token) => {
+  if (typeof window !== 'undefined' && window.location) {
+    const proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const hostname = window.location.hostname;
+    return `${proto}//${hostname}:3000?token=${encodeURIComponent(token)}`;
+  }
+  return `ws://localhost:3000?token=${encodeURIComponent(token)}`;
+};
 
 export default function App() {
   const [token, setToken] = useState(() => localStorage.getItem('dashboard_token') || 'ee98897d56c02a2e716a06004a834e20');
@@ -37,7 +53,7 @@ export default function App() {
       'Authorization': `Bearer ${token}`,
       ...options.headers
     };
-    const res = await fetch(`${API_BASE}${endpoint}`, { ...options, headers });
+    const res = await fetch(`${getApiBase()}${endpoint}`, { ...options, headers });
     if (res.status === 401) {
       setAuthed(false);
       throw new Error('Unauthorized');
@@ -51,7 +67,7 @@ export default function App() {
     let isMounted = true;
     const connectWs = () => {
       try {
-        const ws = new WebSocket(`ws://localhost:3000?token=${encodeURIComponent(token)}`);
+        const ws = new WebSocket(getWsUrl(token));
         wsRef.current = ws;
 
         ws.onopen = () => {
