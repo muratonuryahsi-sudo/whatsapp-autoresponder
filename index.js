@@ -34,14 +34,18 @@ const GeminiService = require('./gemini');
 const blacklist = require('./blacklist');
 const calendar = require('./calendar');
 
+const DashboardServer = require('./dashboard-server');
+
 // Dynamic configuration from environment
 const OWNER_NAME = process.env.OWNER_NAME || 'Owner';
 const BOT_NAME = process.env.BOT_NAME || 'Assistant';
+const DEFAULT_LANGUAGE = process.env.DEFAULT_LANGUAGE || 'English';
 const replyToGroups = process.env.REPLY_TO_GROUPS === 'true';
 const onlyReplyInDnd = process.env.ONLY_REPLY_IN_DND !== 'false';
 const customChromePath = process.env.CHROME_PATH || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
 const DND_PORT = parseInt(process.env.DND_PORT || '3000', 10);
 const DND_SECRET = process.env.DND_SECRET || '';
+const DASHBOARD_API_KEY = process.env.DASHBOARD_API_KEY || '';
 const TROLL_IMAGE_PATH = process.env.TROLL_IMAGE_PATH || path.join(__dirname, 'assets/troll_meme.png');
 
 // Timing constants
@@ -56,10 +60,75 @@ const userBuffers = new Map();
 const lastReplySentTimes = new Map();
 const botStartTime = Math.floor(Date.now() / 1000);
 
+// Live metrics & logs for Dashboard
+let currentQrCode = null;
+let clientStatus = 'INITIALIZING'; // INITIALIZING, WAITING_FOR_QR, CONNECTED, DISCONNECTED
+const liveActivityFeed = [];
+const executiveBriefingArchive = [];
+
 // Do Not Disturb (DND) mode state
 let isDndActive = false;
 let dndSessionMessages = [];
 let dndStartTime = null;
+
+// Initialize Dashboard & DND Server
+const dashboardServer = new DashboardServer({
+  dndPort: DND_PORT,
+  dashboardApiKey: DASHBOARD_API_KEY,
+  onDndToggle: async (active, source) => {
+    await setDndState(active, source);
+  },
+  onUnbanUser: (userId) => {
+    return blacklist.unbanUser(userId);
+  },
+  onSaveSettings: async (newSettings) => {
+    const envFilePath = path.join(__dirname, '.env');
+    let envRaw = fs.existsSync(envFilePath) ? fs.readFileSync(envFilePath, 'utf8') : '';
+    
+    if (newSettings.OWNER_NAME) envRaw = envRaw.replace(/OWNER_NAME=.*/g, `OWNER_NAME="${newSettings.OWNER_NAME}"`);
+    if (newSettings.BOT_NAME) envRaw = envRaw.replace(/BOT_NAME=.*/g, `BOT_NAME="${newSettings.BOT_NAME}"`);
+    if (newSettings.DEFAULT_LANGUAGE) envRaw = envRaw.replace(/DEFAULT_LANGUAGE=.*/g, `DEFAULT_LANGUAGE="${newSettings.DEFAULT_LANGUAGE}"`);
+    if (newSettings.GEMINI_MODEL) envRaw = envRaw.replace(/GEMINI_MODEL=.*/g, `GEMINI_MODEL=${newSettings.GEMINI_MODEL}`);
+    if (typeof newSettings.ONLY_REPLY_IN_DND === 'boolean') envRaw = envRaw.replace(/ONLY_REPLY_IN_DND=.*/g, `ONLY_REPLY_IN_DND=${newSettings.ONLY_REPLY_IN_DND}`);
+    if (newSettings.RESCUE_PASSWORD) envRaw = envRaw.replace(/RESCUE_PASSWORD=.*/g, `RESCUE_PASSWORD="${newSettings.RESCUE_PASSWORD}"`);
+    
+    fs.writeFileSync(envFilePath, envRaw, 'utf8');
+    require('dotenv').config({ override: true });
+  },
+  getSystemState: () => {
+    // Mask sensitive API keys before exposing to frontend
+    const rawKey = process.env.GEMINI_API_KEY || '';
+    const maskedKey = rawKey ? (rawKey.slice(0, 6) + '...' + rawKey.slice(-4)) : '';
+
+    return {
+      status: clientStatus,
+      qrCode: currentQrCode,
+      isDndActive,
+      dndStartTime,
+      messageCount: dndSessionMessages.length,
+      uptimeSeconds: Math.floor(Date.now() / 1000) - botStartTime,
+      settings: {
+        ownerName: process.env.OWNER_NAME || OWNER_NAME,
+        botName: process.env.BOT_NAME || BOT_NAME,
+        defaultLanguage: process.env.DEFAULT_LANGUAGE || DEFAULT_LANGUAGE,
+        geminiModel: process.env.GEMINI_MODEL || 'gemini-3.5-flash-lite',
+        maskedGeminiKey: maskedKey,
+        onlyReplyInDnd: process.env.ONLY_REPLY_IN_DND === 'true',
+        dndPort: DND_PORT,
+        rescuePassword: process.env.RESCUE_PASSWORD || 'unbanme'
+      },
+      bannedUsers: Array.from(blacklist.bannedUsers.entries()).map(([userId, data]) => ({
+        userId,
+        senderName: data.senderName,
+        bannedUntil: data.bannedUntil,
+        remainingMs: Math.max(0, data.bannedUntil - Date.now()),
+        strikes: data.strikes
+      })),
+      activityFeed: liveActivityFeed.slice(-50),
+      briefings: executiveBriefingArchive.slice(-20)
+    };
+  }
+});
 
 // macOS Notification helper (completely silent)
 function showMacNotification(title, message) {
@@ -176,10 +245,15 @@ console.log(`🤖 ${BOT_NAME} (Personal AI Assistant to ${OWNER_NAME})`);
 console.log('==============================================');
 
 client.on('loading_screen', (percent, message) => {
+  clientStatus = 'LOADING';
+  dashboardServer.broadcast('loading_screen', { percent, message });
   console.log(`⏳ Loading WhatsApp Web: ${percent}% - ${message || 'Connecting...'}`);
 });
 
 client.on('qr', (qr) => {
+  currentQrCode = qr;
+  clientStatus = 'WAITING_FOR_QR';
+  dashboardServer.broadcast('qr', { qr });
   console.log('\n==============================================');
   console.log('📲 QR CODE GENERATED! SCAN WITH WHATSAPP:');
   console.log('   (WhatsApp > Settings > Linked Devices > Link a Device)');
@@ -190,14 +264,21 @@ client.on('qr', (qr) => {
 });
 
 client.once('authenticated', () => {
+  currentQrCode = null;
+  clientStatus = 'CONNECTED';
+  dashboardServer.broadcast('authenticated', { status: 'CONNECTED' });
   console.log('✅ WhatsApp authenticated successfully! (Session active)');
 });
 
 client.on('auth_failure', (msg) => {
+  clientStatus = 'DISCONNECTED';
+  dashboardServer.broadcast('auth_failure', { error: msg });
   console.error('❌ Authentication failed:', msg);
 });
 
 client.on('disconnected', (reason) => {
+  clientStatus = 'DISCONNECTED';
+  dashboardServer.broadcast('disconnected', { reason });
   console.log(`\n⚠️ WhatsApp disconnected (Reason: ${reason}).`);
   if (reason === 'LOGOUT') {
     console.log('ℹ️ Device logged out.');
@@ -222,6 +303,7 @@ async function setDndState(active, source = 'Unknown') {
     isDndActive = true;
     dndSessionMessages = [];
     dndStartTime = new Date().toLocaleTimeString();
+    dashboardServer.broadcast('dnd_state_changed', { isDndActive: true, dndStartTime });
     console.log(`\n🔕 [${source}] Do Not Disturb mode ACTIVATED (${dndStartTime})`);
     console.log(`🟢 ${BOT_NAME} will now automatically respond to incoming messages.`);
     showMacNotification(`${BOT_NAME} - DND Active`, `${BOT_NAME} is active. Incoming messages will be auto-replied and logged.`);
@@ -231,6 +313,7 @@ async function setDndState(active, source = 'Unknown') {
     const savedMessages = [...dndSessionMessages];
     isDndActive = false;
     dndSessionMessages = [];
+    dashboardServer.broadcast('dnd_state_changed', { isDndActive: false });
 
     // Clear any pending buffers
     for (const buf of userBuffers.values()) {
@@ -241,6 +324,18 @@ async function setDndState(active, source = 'Unknown') {
     if (savedMessages.length > 0) {
       const summary = await gemini.generateDndSummary(savedMessages);
       const briefing = `📋 *[${BOT_NAME} - Do Not Disturb Executive Briefing]*\n(Period: ${dndStartTime || 'Start'} - ${new Date().toLocaleTimeString()})\n\n${summary}`;
+      
+      // Store in dashboard archive
+      executiveBriefingArchive.unshift({
+        id: Date.now().toString(),
+        time: new Date().toLocaleString(),
+        startTime: dndStartTime,
+        endTime: new Date().toLocaleTimeString(),
+        messageCount: savedMessages.length,
+        summary
+      });
+      dashboardServer.broadcast('new_briefing', { summary, messageCount: savedMessages.length });
+
       await sendToOwner(briefing);
       showMacNotification(`${BOT_NAME} - Briefing Ready`, 'DND ended. Executive summary sent to your WhatsApp.');
     } else {
@@ -307,62 +402,8 @@ async function sendToOwner(content) {
   }
 }
 
-// -------------------------------------------------------------
-// DND (Do Not Disturb) HTTP Server (Apple Shortcuts Integration)
-// -------------------------------------------------------------
-const dndServer = http.createServer(async (req, res) => {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', '*');
-
-  if (req.method === 'OPTIONS') {
-    res.writeHead(200);
-    res.end();
-    return;
-  }
-
-  const url = new URL(req.url, `http://localhost:${DND_PORT}`);
-  const providedKey = url.searchParams.get('key') || req.headers['x-dnd-secret'];
-
-  // Security check: if DND_SECRET is configured, reject requests without valid key
-  if (DND_SECRET && providedKey !== DND_SECRET) {
-    res.writeHead(401, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ error: 'Unauthorized: Invalid or missing DND secret key' }));
-    return;
-  }
-  
-  if (url.pathname === '/dnd/on') {
-    await setDndState(true, 'Apple Shortcuts / Local HTTP');
-    res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ status: 'dnd_started', time: dndStartTime, isDndActive: true }));
-  } 
-  else if (url.pathname === '/dnd/off') {
-    await setDndState(false, 'Apple Shortcuts / Local HTTP');
-    res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ status: 'dnd_ended', messageCount: 0, isDndActive: false }));
-  } 
-  else if (url.pathname === '/dnd/status') {
-    res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ isDndActive, dndStartTime, count: dndSessionMessages.length }));
-  } 
-  else {
-    res.writeHead(404);
-    res.end();
-  }
-});
-
-dndServer.on('error', (err) => {
-  if (err.code === 'EADDRINUSE') {
-    console.warn(`⚠️ [Port Warning] Port ${DND_PORT} is currently in use (an older node process might be running).`);
-    console.warn(`💡 To free up the port, run: kill -9 $(lsof -t -i:${DND_PORT})`);
-  } else {
-    console.error('❌ DND Server error:', err);
-  }
-});
-
-dndServer.listen(DND_PORT, '0.0.0.0', () => {
-  console.log(`📡 DND Webhook server listening on port ${DND_PORT} (0.0.0.0).`);
-});
+// Start the secure dashboard and DND server
+dashboardServer.start();
 
 // -------------------------------------------------------------
 // WhatsApp Message Listener (All Incoming and Outgoing Messages)
@@ -465,7 +506,20 @@ client.on('message_create', async (msg) => {
           const hasNudeTag = assistantReply.includes('[ACTION: SEND_TROLL_NUDE]');
           const isTrollNude = hasNudeTag || gemini.isNudeRequest(transcriptSummary);
 
-          if (isTrollNude) {
+          // Broadcast live activity to Dashboard
+        const activityItem = {
+          id: Date.now().toString(),
+          timestamp: new Date().toLocaleTimeString(),
+          senderName,
+          senderId,
+          incomingMessage: fullMessage,
+          replyText: isTrollNude ? '[Troll Photo Sent]' : replyText,
+          durationMs: duration
+        };
+        liveActivityFeed.unshift(activityItem);
+        dashboardServer.broadcast('new_message_activity', activityItem);
+
+        if (isTrollNude) {
             const cleanReply = assistantReply.replace(/\[ACTION:\s*SEND_TROLL_NUDE\]/gi, '').trim() || 'You asked for it... Enjoy 😉 Hope your heart can handle this!';
             const memePath = getTrollMemePath();
             if (memePath) {
@@ -658,6 +712,19 @@ client.on('message_create', async (msg) => {
         // Universal Troll Nude check: anyone asking for a nude gets the troll meme photo
         const hasNudeTag = replyText.includes('[ACTION: SEND_TROLL_NUDE]');
         const isTrollNude = hasNudeTag || gemini.isNudeRequest(fullMessage);
+
+        // Broadcast live activity to Dashboard
+        const activityItem = {
+          id: Date.now().toString(),
+          timestamp: new Date().toLocaleTimeString(),
+          senderName,
+          senderId,
+          incomingMessage: fullMessage,
+          replyText: isTrollNude ? '[Troll Photo Sent]' : replyText,
+          durationMs: duration
+        };
+        liveActivityFeed.unshift(activityItem);
+        dashboardServer.broadcast('new_message_activity', activityItem);
 
         if (isTrollNude) {
           const cleanReply = replyText.replace(/\[ACTION:\s*SEND_TROLL_NUDE\]/gi, '').trim() || 'You asked for it... Enjoy 😉 Hope your heart can handle this!';

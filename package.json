@@ -6,6 +6,7 @@
   "scripts": {
     "start": "node index.js",
     "setup": "node setup.js",
+    "dashboard": "npm --prefix frontend run dev",
     "dev": "node --watch-path=index.js --watch-path=gemini.js --watch-path=blacklist.js --watch-path=calendar.js --watch-path=.env index.js",
     "watch": "node --watch-path=index.js --watch-path=gemini.js --watch-path=blacklist.js --watch-path=calendar.js --watch-path=.env index.js",
     "postinstall": "node patch-wwebjs.js"
@@ -23,6 +24,7 @@
     "@google/generative-ai": "^0.24.1",
     "dotenv": "^16.4.7",
     "qrcode-terminal": "^0.12.0",
-    "whatsapp-web.js": "^1.26.0"
+    "whatsapp-web.js": "^1.26.0",
+    "ws": "^8.22.0"
   }
 }
